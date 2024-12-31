@@ -23,80 +23,107 @@ function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <>
-      <Menubar className="sticky top-0 w-full max-w-7xl h-auto min-h-16 px-4 md:px-6 py-3 shadow-lg z-50 bg-white flex flex-wrap items-center justify-between">
-        {/* Mobile Toggle */}
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="md:hidden"
-        >
-          {isOpen ? <X /> : <Menu />}
-        </button>
+    <div className="relative">
+      <Menubar className="sticky top-0 w-full max-w-7xl h-12 md:h-16 px-2 md:px-6 py-2 md:py-3 shadow-lg z-50 bg-white">
+        <div className="flex items-center justify-between w-full">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden"
+          >
+            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
 
-        {/* Desktop Navigation */}
-        <div className={`${isOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row w-full md:w-auto items-center gap-4 mt-4 md:mt-0 ${isOpen ? 'order-last' : ''}`}>
-          <NavigationMenu className="w-full md:w-auto">
-            <NavigationMenuList className="flex-col md:flex-row">
-              <NavigationMenuItem className="w-full md:w-auto">
-                <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <NavigationMenuLink>Link</NavigationMenuLink>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+          <div className="hidden md:flex flex-row items-center gap-4 flex-1 justify-end">
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <NavigationMenuLink>Link</NavigationMenuLink>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
-          <NavigationMenu className="w-full md:w-auto">
-            <NavigationMenuList className="flex-col md:flex-row">
-              <NavigationMenuItem className="w-full md:w-auto">
-                <NavigationMenuTrigger>Item Two</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <NavigationMenuLink>Link</NavigationMenuLink>
-                </NavigationMenuContent>
-              </NavigationMenuItem>
-            </NavigationMenuList>
-          </NavigationMenu>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Item Two</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <NavigationMenuLink>Link</NavigationMenuLink>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
-          <MenubarMenu className="w-full md:w-auto">
-            <MenubarTrigger className="w-full md:w-auto">How To</MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
-              <MenubarItem>New Window</MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>Share</MenubarItem>
-              <MenubarItem>Print</MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger>How To</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
+                <MenubarItem>New Window</MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem>Share</MenubarItem>
+                <MenubarItem>Print</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-          <MenubarMenu className="w-full md:w-auto">
-            <MenubarTrigger className="w-full md:w-auto">Products</MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
-              <MenubarItem>New Window</MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>Share</MenubarItem>
-              <MenubarItem>Print</MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger>Products</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
+                <MenubarItem>New Window</MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem>Share</MenubarItem>
+                <MenubarItem>Print</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-          <MenubarMenu className="w-full md:w-auto">
-            <MenubarTrigger className="w-full md:w-auto">About Us</MenubarTrigger>
-            <MenubarContent>
-              <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
-              <MenubarItem>New Window</MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>Share</MenubarItem>
-              <MenubarItem>Print</MenubarItem>
-            </MenubarContent>
-          </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger>About Us</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
+                <MenubarItem>New Window</MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem>Share</MenubarItem>
+                <MenubarItem>Print</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
+          </div>
+
+          <Avatar className="h-6 w-6 md:h-8 md:w-8">
+            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
         </div>
-
-        <Avatar className="h-8 w-8">
-          <AvatarImage src="https://github.com/shadcn.png" />
-          <AvatarFallback>CN</AvatarFallback>
-        </Avatar>
       </Menubar>
-    </>
+
+      {/* Mobile Menu Dropdown */}
+      <div 
+        className={`
+          absolute top-12 left-0 w-full bg-white shadow-lg md:hidden 
+          transition-all duration-300 ease-in-out 
+          ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}
+        `}
+      >
+        <div className="flex flex-col p-4 space-y-4">
+          <button className="text-sm font-medium hover:bg-gray-100 p-2 rounded-md text-left transition-colors">
+            Item One
+          </button>
+          <button className="text-sm font-medium hover:bg-gray-100 p-2 rounded-md text-left transition-colors">
+            Item Two
+          </button>
+          <button className="text-sm font-medium hover:bg-gray-100 p-2 rounded-md text-left transition-colors">
+            How To
+          </button>
+          <button className="text-sm font-medium hover:bg-gray-100 p-2 rounded-md text-left transition-colors">
+            Products
+          </button>
+          <button className="text-sm font-medium hover:bg-gray-100 p-2 rounded-md text-left transition-colors">
+            About Us
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
