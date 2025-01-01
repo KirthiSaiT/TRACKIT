@@ -23,6 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 
+
+
 import React, { useState } from 'react';
 import {
   Menubar,
@@ -42,98 +44,146 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Menu, X } from 'lucide-react';
+import { Github, Menu, X } from 'lucide-react';
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <>
-      <Menubar className="sticky top-0 w-full max-w-7xl h-12 md:h-16 px-2 md:px-6 py-2 md:py-3 shadow-lg z-50 bg-white">
-        <div className="flex items-center justify-between w-full">
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden"
-          >
-            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-
-          <div className="hidden md:flex flex-row items-center gap-4 flex-1 justify-end">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <NavigationMenuLink>Link</NavigationMenuLink>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Item Two</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <NavigationMenuLink>Link</NavigationMenuLink>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-
-            <MenubarMenu>
-              <MenubarTrigger>How To</MenubarTrigger>
-              <MenubarContent>
-                <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
-                <MenubarItem>New Window</MenubarItem>
-                <MenubarSeparator />
-                <MenubarItem>Share</MenubarItem>
-                <MenubarItem>Print</MenubarItem>
-              </MenubarContent>
-            </MenubarMenu>
-
-            <MenubarMenu>
-              <MenubarTrigger>Products</MenubarTrigger>
-              <MenubarContent>
-                <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
-                <MenubarItem>New Window</MenubarItem>
-                <MenubarSeparator />
-                <MenubarItem>Share</MenubarItem>
-                <MenubarItem>Print</MenubarItem>
-              </MenubarContent>
-            </MenubarMenu>
-
-            <MenubarMenu>
-              <MenubarTrigger>About Us</MenubarTrigger>
-              <MenubarContent>
-                <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
-                <MenubarItem>New Window</MenubarItem>
-                <MenubarSeparator />
-                <MenubarItem>Share</MenubarItem>
-                <MenubarItem>Print</MenubarItem>
-              </MenubarContent>
-            </MenubarMenu>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isOpen && (
-              <div className="md:hidden flex items-center gap-2 overflow-x-auto">
-                <button className="text-sm whitespace-nowrap">Item One</button>
-                <button className="text-sm whitespace-nowrap">Item Two</button>
-                <button className="text-sm whitespace-nowrap">How To</button>
-                <button className="text-sm whitespace-nowrap">Products</button>
-                <button className="text-sm whitespace-nowrap">About Us</button>
-              </div>
-            )}
-            <Avatar className="h-6 w-6 md:h-8 md:w-8">
-              <AvatarImage src="https://github.com/shadcn.png" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-          </div>
+    <div className="bg-black text-white min-h-screen relative overflow-x-hidden">
+      {/* Navbar */}
+      <Menubar className="sticky top-0 w-full h-16 px-4 lg:px-8 shadow-lg z-50 bg-black text-white border-b border-gray-800 flex items-center justify-between">
+        {/* Left Section: Avatar and Logo */}
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="https://github.com/shadcn.png" alt="Avatar" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <span className="text-lg font-semibold">TRACK1T</span>
         </div>
 
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center space-x-6">
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="text-sm">Item One</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <NavigationMenuLink className="p-2">Link</NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          <NavigationMenu>
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className="text-sm">Item Two</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <NavigationMenuLink className="p-2">Link</NavigationMenuLink>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+
+          <MenubarMenu>
+            <MenubarTrigger className="text-sm">How To</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
+              <MenubarItem>New Window</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Share</MenubarItem>
+              <MenubarItem>Print</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+
+          <MenubarMenu>
+            <MenubarTrigger className="text-sm">Products</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
+              <MenubarItem>New Window</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Share</MenubarItem>
+              <MenubarItem>Print</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+
+          <MenubarMenu>
+            <MenubarTrigger className="text-sm">About Us</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem>New Tab <MenubarShortcut>⌘T</MenubarShortcut></MenubarItem>
+              <MenubarItem>New Window</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Share</MenubarItem>
+              <MenubarItem>Print</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="lg:hidden p-2 hover:bg-gray-800 rounded-md transition-colors"
+        >
+          {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
       </Menubar>
-    </>
+
+      {/* Mobile Menu Dropdown */}
+      <div
+        className={`fixed top-16 right-0 w-full bg-black border-b border-gray-800 lg:hidden
+          transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "translate-x-full"}`}
+      >
+        <div className="flex flex-col p-4 space-y-4">
+          <button className="w-full text-left text-sm font-medium hover:bg-gray-800 p-3 rounded-md transition-colors">
+            Item One
+          </button>
+          <button className="w-full text-left text-sm font-medium hover:bg-gray-800 p-3 rounded-md transition-colors">
+            Item Two
+          </button>
+          <button className="w-full text-left text-sm font-medium hover:bg-gray-800 p-3 rounded-md transition-colors">
+            How To
+          </button>
+          <button className="w-full text-left text-sm font-medium hover:bg-gray-800 p-3 rounded-md transition-colors">
+            Products
+          </button>
+          <button className="w-full text-left text-sm font-medium hover:bg-gray-800 p-3 rounded-md transition-colors">
+            About Us
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 lg:px-8 py-12 md:py-20">
+        <div className="max-w-4xl mx-auto">
+          {/* Hero Section */}
+          <div className="text-center lg:text-left">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              <span className="text-pink-500">Shadcn</span>{' '}
+              <span className="text-white">landing page</span>{' '}
+              <span className="text-white">for</span>{' '}
+              <span className="text-cyan-400">React</span>{' '}
+              <span className="text-white">developers</span>
+            </h1>
+            
+            <p className="text-gray-400 mb-8 text-lg max-w-2xl mx-auto lg:mx-0">
+              Build your React landing page effortlessly with the required sections to your project.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <button className="w-full sm:w-auto px-6 py-3 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm font-medium">
+                Get Started
+              </button>
+              
+              <button className="w-full sm:w-auto px-6 py-3 bg-transparent border border-gray-800 text-white rounded-md hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 text-sm font-medium">
+                <Github className="w-5 h-5" />
+                Github Repository
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
   );
 }
 
