@@ -26,99 +26,102 @@ function App() {
     <>
       <div className="bg-black text-white min-h-screen relative">
         {/* Navbar */}
-        <Menubar className="sticky top-0 w-full max-w-7xl h-12 md:h-16 px-2 md:px-6 py-2 md:py-3 shadow-lg z-50 bg-black text-white border border-black">
-        <Avatar className="h-6 w-6 md:h-8 md:w-8">
+        <Menubar className="sticky top-0 w-full max-w-7xl h-12 md:h-16 px-2 md:px-6 py-2 md:py-3 shadow-lg z-50 bg-black text-white border border-black flex items-center">
+          {/* Left Section: Avatar and Logo */}
+          <div className="flex items-center space-x-2">
+            <Avatar className=" h-6 w-6 md:h-8 md:w-8">
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback>CN</AvatarFallback>
             </Avatar>
-          <div className="flex items-center justify-between px-4 py-2">
-            <div className="text-lg font-semibold">TRACK1T</div>
+            <div className=" relative left-3 text-lg font-semibold">TRACK1T</div>
           </div>
-          <div className="flex items-center justify-between w-full">
-            
 
+          {/* Right Section: Menu Icon */}
+          <div className="flex-grow flex justify-end">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden"
             >
               {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
+          </div>
 
-            <div className="hidden md:flex flex-row items-center gap-4 flex-1 justify-end">
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <NavigationMenuLink>Link</NavigationMenuLink>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex flex-row items-center gap-4 flex-1 justify-end">
+            {/* Navigation Items */}
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <NavigationMenuLink>Link</NavigationMenuLink>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuTrigger>Item Two</NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <NavigationMenuLink>Link</NavigationMenuLink>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Item Two</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <NavigationMenuLink>Link</NavigationMenuLink>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
 
-              <MenubarMenu>
-                <MenubarTrigger>How To</MenubarTrigger>
-                <MenubarContent>
-                  <MenubarItem>
-                    New Tab <MenubarShortcut>⌘T</MenubarShortcut>
-                  </MenubarItem>
-                  <MenubarItem>New Window</MenubarItem>
-                  <MenubarSeparator />
-                  <MenubarItem>Share</MenubarItem>
-                  <MenubarItem>Print</MenubarItem>
-                </MenubarContent>
-              </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger>How To</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem>
+                  New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem>New Window</MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem>Share</MenubarItem>
+                <MenubarItem>Print</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-              <MenubarMenu>
-                <MenubarTrigger>Products</MenubarTrigger>
-                <MenubarContent>
-                  <MenubarItem>
-                    New Tab <MenubarShortcut>⌘T</MenubarShortcut>
-                  </MenubarItem>
-                  <MenubarItem>New Window</MenubarItem>
-                  <MenubarSeparator />
-                  <MenubarItem>Share</MenubarItem>
-                  <MenubarItem>Print</MenubarItem>
-                </MenubarContent>
-              </MenubarMenu>
+            <MenubarMenu>
+              <MenubarTrigger>Products</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem>
+                  New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem>New Window</MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem>Share</MenubarItem>
+                <MenubarItem>Print</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
 
-              <MenubarMenu>
-                <MenubarTrigger>About Us</MenubarTrigger>
-                <MenubarContent>
-                  <MenubarItem>
-                    New Tab <MenubarShortcut>⌘T</MenubarShortcut>
-                  </MenubarItem>
-                  <MenubarItem>New Window</MenubarItem>
-                  <MenubarSeparator />
-                  <MenubarItem>Share</MenubarItem>
-                  <MenubarItem>Print</MenubarItem>
-                </MenubarContent>
-              </MenubarMenu>
-            </div>
+            <MenubarMenu>
+              <MenubarTrigger>About Us</MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem>
+                  New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+                </MenubarItem>
+                <MenubarItem>New Window</MenubarItem>
+                <MenubarSeparator />
+                <MenubarItem>Share</MenubarItem>
+                <MenubarItem>Print</MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
           </div>
         </Menubar>
+
+        {/* Content */}
         <div>
-          <h1>hi</h1>
+          <h1></h1>
         </div>
 
         {/* Mobile Menu Dropdown */}
         <div
-          className={`
-            absolute top-12 left-0 w-full bg-black shadow-lg md:hidden 
+          className={`absolute top-12 left-72 w-full bg-black shadow-lg md:hidden 
             transition-all duration-300 ease-in-out 
-            ${isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}
-          `}
+            ${isOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2 pointer-events-none"}`}
         >
           <div className="flex flex-col p-4 space-y-4">
             <button className="text-sm font-medium hover:bg-gray-800 p-2 rounded-md text-left transition-colors">
