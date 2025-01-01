@@ -32,11 +32,11 @@ function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="bg-black text-white min-h-screen w-[1263px] h-[585px] relative overflow-hidden">
+    <div className="min-h-screen w-[1263px] h-[585px] relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_rgba(16,_185,_129,_0.15),transparent_50%),radial-gradient(ellipse_at_bottom_left,_rgba(16,_185,_129,_0.15),transparent_50%)] bg-black">
       {/* Navbar */}
       <Menubar className="sticky top-0 w-full h-16 px-4 md:px-8 shadow-lg z-50 bg-black text-white border-b border-gray-800 flex items-center">
         <div className="flex items-center space-x-2">
-        <Avatar className="h-8 w-8">
+          <Avatar className="h-8 w-8">
             <AvatarImage src="https://github.com/shadcn.png" />
             <AvatarFallback>CN</AvatarFallback>
           </Avatar>
@@ -69,35 +69,33 @@ function App() {
       </Menubar>
 
       {/* Main Content */}
-      <div className=" flex px-8 py-16">
-        {/* Left Section */}
-        <div className="w-1/2 pt-8">
-          <h1 className="text-5xl font-bold mb-4">
-            <span className="text-pink-500">TRACK1T</span> landing page<br />
-            for <span className="text-cyan-400">React</span> developers
-          </h1>
-          <p className="text-gray-400 mb-8 text-lg">
-            Build your React landing page effortlessly 
-          </p>
-          <div className="flex gap-4">
-            <Button className="bg-green-500 hover:bg-green-600 text-white px-8">
-              Get Started
-            </Button>
-            <Button variant="outline" className="border-gray-700 text-gray-300 px-8">
-              <Github className="mr-2 h-5 w-5" />
-              Github Repository
-            </Button>
-          </div>
-        </div>
+      <div className="flex px-8 py-16">
+  {/* Left Section */}
+  <div className="w-1/2 pt-8">
+    <h1 className="text-5xl font-bold mb-4 text-white">
+      <span className="text-pink-500">TRACK1T</span> landing page<br />
+      for <span className="text-cyan-400">React</span> developers
+    </h1>
+    <p className="text-white mb-8 text-lg">
+      Build your React landing page effortlessly 
+    </p>
+    <div className="flex gap-4">
+      <Button className="bg-green-500 hover:bg-green-600 text-white px-8">
+        Get Started
+      </Button>
+      
+    </div>
+  </div>
 
         {/* Right Section - Cards */}
-        <div className="relative  w-1/2 ">
+        <div className="relative w-1/2">
           {/* John Doe Card */}
-          <Card className="relative   bottom-12 right-12 bg-zinc-900/50 border-zinc-800 w-80">
+          <Card className="relative bottom-12 right-12 bg-zinc-900/50 border-zinc-800 w-80 rounded-xl backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <Avatar>
-                  <AvatarImage src="/api/placeholder/40/40" />
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="./src/assets/vemkat raghavan.png" />
+                  <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
                 <div>
                   <h3 className="text-white font-semibold">John Doe React</h3>
@@ -109,7 +107,7 @@ function App() {
           </Card>
 
           {/* Pricing Card */}
-          <Card className="relative bottom-7 left-4 bg-zinc-900/50 border-zinc-800 w-64 h-80">
+          <Card className="relative bottom-7 left-4 bg-zinc-900/50 border-zinc-800 w-64 h-80 rounded-xl backdrop-blur-sm">
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-white text-xl font-semibold">Free</h3>
@@ -134,14 +132,15 @@ function App() {
           </Card>
 
           {/* Developer Card */}
-          <Card className="absolute  bottom-52 right-10 bg-zinc-900/50 border-zinc-800 w-64">
+          <Card className="absolute bottom-52 right-10 bg-zinc-900/50 border-zinc-800 w-64 rounded-xl backdrop-blur-sm">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-3">
-                <Avatar>
-                  <AvatarImage src="/api/placeholder/40/40" />
+              <Avatar className="h-8 w-8">
+                  <AvatarImage src="./src/assets/vemkat raghavan.png" />
+                  <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-white font-semibold">Leo Miranda</h3>
+                  <h3 className="text-white font-semibold">Sudesh Govindh</h3>
                   <p className="text-green-500 text-sm">Frontend Developer</p>
                 </div>
               </div>
@@ -157,7 +156,7 @@ function App() {
           </Card>
 
           {/* Light/Dark Mode Card */}
-          <Card className="absolute bottom-8 right-2 bg-zinc-900/50 border-zinc-800 w-72">
+          <Card className="absolute bottom-8 right-2 bg-zinc-900/50 border-zinc-800 w-72 rounded-xl backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-green-500/20 rounded-lg">
