@@ -172,9 +172,9 @@ function App() {
         
       </div>
       
-      <div className="space-y-4 max-w-sm ml-auto">
+      <div className="relative border border-red-800 w-96 space-y-4 max-w-sm ml-auto">
       {/* Venkat Card */}
-      <Card className="relative bg-zinc-900/50 border-zinc-800 p-4 bottom-80 right-72">
+      <Card className=" relative bg-zinc-900/50 border-zinc-800 p-4 w-72 bottom-80 right-72">
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarImage src="/api/placeholder/40/40" alt="John Doe" className="rounded-full" />
@@ -188,7 +188,7 @@ function App() {
       </Card>
 
       {/* Leo Miranda Card */}
-      <Card className="bg-zinc-900/50 border-zinc-800 p-4">
+      <Card className="relative bottom-96 bg-zinc-900/50 border-zinc-800 w-80  left-8 p-4">
         <div className="flex items-center gap-3 mb-3">
           <Avatar>
             <AvatarImage src="/api/placeholder/40/40" alt="Leo Miranda" className="rounded-full" />
@@ -209,7 +209,7 @@ function App() {
       </Card>
 
       {/* Pricing Card */}
-      <Card className="bg-zinc-900/50 border-zinc-800 p-6">
+      <Card className="relative bottom-96 right-72 w-72  bg-zinc-900/50 border-zinc-800 p-6">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-white text-xl font-semibold">Free</h3>
           <span className="px-3 py-1 bg-green-500/20 text-green-500 rounded-full text-sm">Most popular</span>
@@ -235,7 +235,7 @@ function App() {
       </Card>
 
       {/* Light & Dark Mode Card */}
-      <Card className="bg-zinc-900/50 border-zinc-800 p-4">
+      <Card className="relative bottom-96 bg-zinc-900/50 border-zinc-800 p-4">
         <div className="flex items-center gap-3 mb-3">
           <div className="p-2 bg-green-500/20 rounded-lg">
             <LightbulbIcon className="w-6 h-6 text-green-500" />
