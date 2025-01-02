@@ -8,31 +8,19 @@ import {
   MenubarShortcut,
   MenubarTrigger,
 } from '@/components/ui/menubar';
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from '@/components/ui/navigation-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Github, Menu, X, Twitter, LinkedinIcon, LightbulbIcon, CheckIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="min-h-screen w-[1263px] h-[585px] relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_rgba(16,_185,_129,_0.15),transparent_50%),radial-gradient(ellipse_at_bottom_left,_rgba(16,_185,_129,_0.15),transparent_50%)] bg-black">
+    <div className="min-h-screen w-full relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_rgba(16,_185,_129,_0.15),transparent_50%),radial-gradient(ellipse_at_bottom_left,_rgba(16,_185,_129,_0.15),transparent_50%)] bg-black">
       {/* Navbar */}
       <Menubar className="sticky top-0 w-full h-16 px-4 md:px-8 shadow-lg z-50 bg-black text-white border-b border-gray-800 flex items-center">
         <div className="flex items-center space-x-2">
@@ -45,21 +33,11 @@ function App() {
 
         <div className="flex-grow flex justify-end items-center">
           <div className="hidden md:flex items-center space-x-6">
-            <MenubarMenu>
-              <MenubarTrigger className="text-gray-300">Item One</MenubarTrigger>
-            </MenubarMenu>
-            <MenubarMenu>
-              <MenubarTrigger className="text-gray-300">Item Two</MenubarTrigger>
-            </MenubarMenu>
-            <MenubarMenu>
-              <MenubarTrigger className="text-gray-300">How To</MenubarTrigger>
-            </MenubarMenu>
-            <MenubarMenu>
-              <MenubarTrigger className="text-gray-300">Products</MenubarTrigger>
-            </MenubarMenu>
-            <MenubarMenu>
-              <MenubarTrigger className="text-gray-300">About Us</MenubarTrigger>
-            </MenubarMenu>
+            {['Item One', 'Item Two', 'How To', 'Products', 'About Us'].map((item) => (
+              <MenubarMenu key={item}>
+                <MenubarTrigger className="text-gray-300">{item}</MenubarTrigger>
+              </MenubarMenu>
+            ))}
           </div>
 
           <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2">
@@ -68,29 +46,41 @@ function App() {
         </div>
       </Menubar>
 
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-90">
+          <div className="flex flex-col items-center pt-20 space-y-6">
+            {['Item One', 'Item Two', 'How To', 'Products', 'About Us'].map((item) => (
+              <button key={item} className="text-white text-lg">
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <div className="flex px-8 py-16">
-  {/* Left Section */}
-  <div className="w-1/2 pt-8">
-    <h1 className="text-5xl font-bold mb-4 text-white">
-      <span className="text-pink-500">TRACK1T</span> landing page<br />
-      for <span className="text-cyan-400">React</span> developers
-    </h1>
-    <p className="text-white mb-8 text-lg">
-      Build your React landing page effortlessly 
-    </p>
-    <div className="flex gap-4">
-      <Button className="bg-green-500 hover:bg-green-600 text-white px-8">
-        Get Started
-      </Button>
-      
-    </div>
-  </div>
+      <div className="flex flex-col md:flex-row px-4 md:px-8 py-8 md:py-16">
+        {/* Left Section */}
+        <div className="w-full md:w-1/2 pt-4 md:pt-8">
+          <h1 className="text-3xl md:text-5xl font-bold mb-4 text-white">
+            <span className="text-pink-500">TRACK1T</span> landing page<br />
+            for <span className="text-cyan-400">React</span> developers
+          </h1>
+          <p className="text-white mb-6 md:mb-8 text-base md:text-lg">
+            Build your React landing page effortlessly 
+          </p>
+          <div className="flex gap-4">
+            <Button className="bg-green-500 hover:bg-green-600 text-white px-6 md:px-8">
+              Get Started
+            </Button>
+          </div>
+        </div>
 
         {/* Right Section - Cards */}
-        <div className="relative w-1/2">
+        <div className="relative w-full md:w-1/2 mt-12 md:mt-0">
           {/* John Doe Card */}
-          <Card className="relative bottom-12 right-12 bg-zinc-900/50 border-zinc-800 w-80 rounded-xl backdrop-blur-sm">
+          <Card className="relative md:bottom-12 md:right-12 bg-zinc-900/50 border-zinc-800 w-full md:w-80 rounded-xl backdrop-blur-sm mb-4 md:mb-0">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
@@ -107,7 +97,7 @@ function App() {
           </Card>
 
           {/* Pricing Card */}
-          <Card className="relative bottom-7 left-4 bg-zinc-900/50 border-zinc-800 w-64 h-80 rounded-xl backdrop-blur-sm">
+          <Card className="relative md:bottom-7 md:left-4 bg-zinc-900/50 border-zinc-800 w-full md:w-64 h-auto md:h-80 rounded-xl backdrop-blur-sm mb-4 md:mb-0">
             <CardContent className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-white text-xl font-semibold">Free</h3>
@@ -132,10 +122,10 @@ function App() {
           </Card>
 
           {/* Developer Card */}
-          <Card className="absolute bottom-52 right-10 bg-zinc-900/50 border-zinc-800 w-64 rounded-xl backdrop-blur-sm">
+          <Card className="relative md:absolute md:bottom-52 md:right-10 bg-zinc-900/50 border-zinc-800 w-full md:w-64 rounded-xl backdrop-blur-sm mb-4 md:mb-0">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-3">
-              <Avatar className="h-8 w-8">
+                <Avatar className="h-8 w-8">
                   <AvatarImage src="./src/assets/vemkat raghavan.png" />
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
@@ -156,7 +146,7 @@ function App() {
           </Card>
 
           {/* Light/Dark Mode Card */}
-          <Card className="absolute bottom-8 right-2 bg-zinc-900/50 border-zinc-800 w-72 rounded-xl backdrop-blur-sm">
+          <Card className="relative md:absolute md:bottom-8 md:right-2 bg-zinc-900/50 border-zinc-800 w-full md:w-72 rounded-xl backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-green-500/20 rounded-lg">
@@ -171,6 +161,7 @@ function App() {
           </Card>
         </div>
       </div>
+      
     </div>
   );
 }
