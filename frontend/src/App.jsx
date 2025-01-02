@@ -9,15 +9,80 @@ import {
   MenubarTrigger,
 } from '@/components/ui/menubar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Github, Menu, X, Twitter, LinkedinIcon, LightbulbIcon, CheckIcon } from 'lucide-react';
+import { 
+  Github, 
+  Menu, 
+  X, 
+  Twitter, 
+  LinkedinIcon, 
+  LightbulbIcon, 
+  CheckIcon,
+  MapPin,
+  Users,
+  Clock,
+  Shield,
+  Bell,
+  Settings
+} from 'lucide-react';
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
 } from "@/components/ui/card"
 
+// Feature Card Component
+const FeatureCard = ({ icon: Icon, title, description }) => (
+  <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm transform hover:scale-105 transition-transform duration-300">
+    <CardContent className="p-6">
+      <div className="flex items-start gap-4">
+        <div className="p-2 bg-green-500/20 rounded-lg">
+          <Icon className="w-6 h-6 text-green-500" />
+        </div>
+        <div>
+          <h3 className="text-white text-lg font-semibold mb-2">{title}</h3>
+          <p className="text-gray-400 text-sm">{description}</p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 function App() {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Features Data
+  const features = [
+    {
+      icon: MapPin,
+      title: "Real-Time Tracking",
+      description: "Monitor location updates instantly with high accuracy and minimal battery consumption"
+    },
+    {
+      icon: Users,
+      title: "Room-Based Sharing",
+      description: "Create private rooms and invite specific users to share locations within closed groups"
+    },
+    {
+      icon: Clock,
+      title: "24/7 Monitoring",
+      description: "Continuous tracking with historical data and movement patterns"
+    },
+    {
+      icon: Shield,
+      title: "Privacy Controls",
+      description: "Granular permissions and the ability to pause sharing at any time"
+    },
+    {
+      icon: Bell,
+      title: "Smart Notifications",
+      description: "Get alerts for geofence entries/exits and important location updates"
+    },
+    {
+      icon: Settings,
+      title: "Admin Dashboard",
+      description: "Comprehensive controls for room management and user permissions"
+    }
+  ];
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_rgba(16,_185,_129,_0.15),transparent_50%),radial-gradient(ellipse_at_bottom_left,_rgba(16,_185,_129,_0.15),transparent_50%)] bg-black">
@@ -161,7 +226,25 @@ function App() {
           </Card>
         </div>
       </div>
-      
+
+      {/* Features Section */}
+      <div className="w-full py-16 px-4 md:px-8 border-t border-gray-800">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+            Why Choose <span className="text-pink-500">TRACK1T</span>
+          </h2>
+          <p className="text-gray-400 max-w-2xl mx-auto text-base md:text-lg">
+            Advanced location tracking features designed for teams and organizations
+            that need reliable, real-time monitoring solutions.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+          {features.map((feature, index) => (
+            <FeatureCard key={index} {...feature} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
