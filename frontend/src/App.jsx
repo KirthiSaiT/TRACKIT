@@ -30,6 +30,7 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card"
+import Room from './Room.jsx'
 
 const FeatureCard = ({ icon: Icon, title, description }) => (
   <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm transform hover:scale-105 transition-transform duration-300">
@@ -46,8 +47,39 @@ const FeatureCard = ({ icon: Icon, title, description }) => (
     </CardContent>
   </Card>
 );
+//Room module
+const ItemOne = () => <div className="p-8 text-white">
 
-const ItemOne = () => <div className="p-8 text-white">Item One Content</div>;
+  <div className="h-full w-full p-8 text-white overflow-hidden"> {/* added overflow-hidden */}
+      <div className="flex flex-col items-center justify-center h-full px-4">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <div className="relative w-64 h-64 mx-auto">
+            <svg className="w-full h-full" viewBox="0 0 200 200">
+              <rect x="60" y="40" width="80" height="80" fill="none" stroke="white" strokeWidth="2"/>
+              <line x1="100" y1="40" x2="100" y2="120" stroke="white" strokeWidth="2"/>
+              <line x1="60" y1="80" x2="140" y2="80" stroke="white" strokeWidth="2"/>
+              <circle cx="70" cy="95" r="10" fill="#FFB6C1" opacity="0.8"/>
+              <path d="M70 95 C70 85 75 80 70 75" stroke="#90EE90" fill="none"/>
+              <rect x="110" y="70" width="20" height="25" fill="#FFD700"/>
+              <rect x="80" y="130" width="40" height="5" fill="#4169E1"/>
+              <rect x="85" y="125" width="30" height="5" fill="white"/>
+            </svg>
+          </div>
+
+          <h2 className="text-2xl font-semibold">Add a class to get started</h2>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <button className="text-blue-500 hover:text-blue-400 font-medium">Create class</button>
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-md">Join class</Button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+</div>;
+
+
+
 const ItemTwo = () => <div className="p-8 text-white">Item Two Content</div>;
 const HowTo = () => <div className="p-8 text-white">How To Content</div>;
 const Products = () => <div className="p-8 text-white">Products Content</div>;
@@ -105,7 +137,7 @@ function App() {
             <div className="hidden md:flex items-center space-x-6">
               <MenubarMenu>
                 <MenubarTrigger className="text-gray-300">
-                  <Link to="/item-one">Item One</Link>
+                  <Link to="/item-one">Rooms</Link>
                 </MenubarTrigger>
               </MenubarMenu>
               <MenubarMenu>
@@ -139,7 +171,7 @@ function App() {
         {isOpen && (
           <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-90">
             <div className="flex flex-col items-center pt-20 space-y-6">
-              <Link to="/item-one" className="text-white text-lg" onClick={() => setIsOpen(false)}>Item One</Link>
+              <Link to="./Room.jsx" className="text-white text-lg" onClick={() => setIsOpen(false)}>Item One</Link>
               <Link to="/item-two" className="text-white text-lg" onClick={() => setIsOpen(false)}>Item Two</Link>
               <Link to="/how-to" className="text-white text-lg" onClick={() => setIsOpen(false)}>How To</Link>
               <Link to="/products" className="text-white text-lg" onClick={() => setIsOpen(false)}>Products</Link>
