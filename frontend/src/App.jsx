@@ -29,8 +29,14 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
 } from "@/components/ui/card"
 import Room from './Room.jsx'
+import {Input} from "@/components/ui/input";
+import {Textarea} from "@/components/ui/textarea";
 
 const FeatureCard = ({ icon: Icon, title, description }) => (
   <Card className="bg-zinc-900/50 border-zinc-800 backdrop-blur-sm transform hover:scale-105 transition-transform duration-300">
@@ -48,36 +54,203 @@ const FeatureCard = ({ icon: Icon, title, description }) => (
   </Card>
 );
 //Room module
-const ItemOne = () => <div className="p-8 text-white">
+const ItemOne = () => {
+  const [showJoinCard, setShowJoinCard] = useState(false);
+  const [showCreateCard, setShowCreateCard] = useState(false);
+  const [formData, setFormData] = useState({
+    adminKey: '',
+    className: '',
+    description: '',
+    capacity: '',
+    duration: ''
+  });
 
-  <div className="h-full w-full p-8 text-white overflow-hidden"> {/* added overflow-hidden */}
-      <div className="flex flex-col items-center justify-center h-full px-4">
-        <div className="max-w-md w-full space-y-8 text-center">
-          <div className="relative w-64 h-64 mx-auto">
-            <svg className="w-full h-full" viewBox="0 0 200 200">
-              <rect x="60" y="40" width="80" height="80" fill="none" stroke="white" strokeWidth="2"/>
-              <line x1="100" y1="40" x2="100" y2="120" stroke="white" strokeWidth="2"/>
-              <line x1="60" y1="80" x2="140" y2="80" stroke="white" strokeWidth="2"/>
-              <circle cx="70" cy="95" r="10" fill="#FFB6C1" opacity="0.8"/>
-              <path d="M70 95 C70 85 75 80 70 75" stroke="#90EE90" fill="none"/>
-              <rect x="110" y="70" width="20" height="25" fill="#FFD700"/>
-              <rect x="80" y="130" width="40" height="5" fill="#4169E1"/>
-              <rect x="85" y="125" width="30" height="5" fill="white"/>
-            </svg>
+  const handleCreateClass = (e) => {
+    e.preventDefault();
+    console.log('Creating class:', formData);
+    setShowCreateCard(false);
+    setFormData({
+      adminKey: '',
+      className: '',
+      description: '',
+      capacity: '',
+      duration: ''
+    });
+  };
+
+  const handleJoinClass = (e) => {
+    e.preventDefault();
+    console.log('Joining class with key:', formData.adminKey);
+    setShowJoinCard(false);
+    setFormData({ ...formData, adminKey: '' });
+  };
+
+  return (
+    <>
+      <div className="p-8 text-white">
+        <div className="h-full w-full p-8 text-white overflow-hidden">
+          <div className="flex flex-col items-center justify-center h-full px-4">
+            <div className="max-w-md w-full space-y-8 text-center">
+              <div className="relative w-64 h-64 mx-auto">
+                <svg className="w-full h-full" viewBox="0 0 200 200">
+                  <rect x="60" y="40" width="80" height="80" fill="none" stroke="white" strokeWidth="2"/>
+                  <line x1="100" y1="40" x2="100" y2="120" stroke="white" strokeWidth="2"/>
+                  <line x1="60" y1="80" x2="140" y2="80" stroke="white" strokeWidth="2"/>
+                  <circle cx="70" cy="95" r="10" fill="#FFB6C1" opacity="0.8"/>
+                  <path d="M70 95 C70 85 75 80 70 75" stroke="#90EE90" fill="none"/>
+                  <rect x="110" y="70" width="20" height="25" fill="#FFD700"/>
+                  <rect x="80" y="130" width="40" height="5" fill="#4169E1"/>
+                  <rect x="85" y="125" width="30" height="5" fill="white"/>
+                </svg>
+              </div>
+              
+              <h2 className="text-2xl font-semibold">Add a class to get started</h2>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button 
+                  onClick={() => {
+                    setShowCreateCard(true);
+                    setShowJoinCard(false);
+                  }}
+                  className="text-blue-500 hover:text-blue-400 font-medium"
+                >
+                  Create class
+                </button>
+                <Button 
+                  onClick={() => {
+                    setShowJoinCard(true);
+                    setShowCreateCard(false);
+                  }}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-md"
+                >
+                  Join class
+                </Button>
+              </div>
+            </div>
           </div>
-
-          <h2 className="text-2xl font-semibold">Add a class to get started</h2>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button className="text-blue-500 hover:text-blue-400 font-medium">Create class</button>
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-2 rounded-md">Join class</Button>
-          </div>
-
         </div>
       </div>
-    </div>
-</div>;
 
+      {/* Join Class Card */}
+      {showJoinCard && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="relative z-50">
+            <Card className="w-[440px] bg-[#121212] text-white border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold">Join class</CardTitle>
+                <CardDescription className="text-zinc-400">
+                  Enter the admin key to join the class
+                </CardDescription>
+              </CardHeader>
+              <form onSubmit={handleJoinClass}>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Enter admin key"
+                      value={formData.adminKey}
+                      onChange={(e) => setFormData({ ...formData, adminKey: e.target.value })}
+                      className="bg-[#1a1a1a] border-zinc-800 text-white h-12 rounded-md"
+                      required
+                    />
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowJoinCard(false)}
+                    className="text-white hover:bg-zinc-800"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-white text-black hover:bg-zinc-200"
+                  >
+                    Join class
+                  </Button>
+                </CardFooter>
+              </form>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Create Class Card */}
+      {showCreateCard && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="relative z-50">
+            <Card className="w-[440px] bg-[#121212] text-white border-zinc-800">
+              <CardHeader>
+                <CardTitle className="text-2xl font-semibold">Create class</CardTitle>
+                <CardDescription className="text-zinc-400">
+                  Fill in the details to create a new class
+                </CardDescription>
+              </CardHeader>
+              <form onSubmit={handleCreateClass}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Class name"
+                      value={formData.className}
+                      onChange={(e) => setFormData({ ...formData, className: e.target.value })}
+                      className="bg-[#1a1a1a] border-zinc-800 text-white h-12 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder="Description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="bg-[#1a1a1a] border-zinc-800 text-white min-h-[100px] rounded-md"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Input
+                      type="number"
+                      placeholder="Capacity"
+                      value={formData.capacity}
+                      onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                      className="bg-[#1a1a1a] border-zinc-800 text-white h-12 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Duration (in weeks)"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                      className="bg-[#1a1a1a] border-zinc-800 text-white h-12 rounded-md"
+                      required
+                    />
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowCreateCard(false)}
+                    className="text-white hover:bg-zinc-800"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-white text-black hover:bg-zinc-200"
+                  >
+                    Create class
+                  </Button>
+                </CardFooter>
+              </form>
+            </Card>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
 
 
 const ItemTwo = () => <div className="p-8 text-white">Item Two Content</div>;
@@ -171,7 +344,7 @@ function App() {
         {isOpen && (
           <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-90">
             <div className="flex flex-col items-center pt-20 space-y-6">
-              <Link to="./Room.jsx" className="text-white text-lg" onClick={() => setIsOpen(false)}>Item One</Link>
+              <Link to="/item-one" className="text-white text-lg" onClick={() => setIsOpen(false)}>Room</Link>
               <Link to="/item-two" className="text-white text-lg" onClick={() => setIsOpen(false)}>Item Two</Link>
               <Link to="/how-to" className="text-white text-lg" onClick={() => setIsOpen(false)}>How To</Link>
               <Link to="/products" className="text-white text-lg" onClick={() => setIsOpen(false)}>Products</Link>
