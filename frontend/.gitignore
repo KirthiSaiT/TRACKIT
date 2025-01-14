@@ -866,3 +866,8 @@ function App() {
 }
 
 export default App;
+
+
+<div className="navbar sticky top-0 z-50 w-full bg-black shadow-md">
+      <Navbar/>
+      </div>
