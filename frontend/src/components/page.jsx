@@ -125,60 +125,64 @@ const Rooms = () => {
 
           {/* Active Card */}
           {activeCard && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 w-80">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{activeCard === "create" ? "Create Room" : "Join Room"}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {activeCard === "create" ? (
-                      <div>
-                        <label className="block mb-2">Admin Name</label>
-                        <input
-                          type="text"
-                          value={adminName}
-                          onChange={(e) => setAdminName(e.target.value)}
-                          placeholder="Enter Admin Name"
-                          className="mb-4 w-full p-2 border rounded"
-                        />
-                        <label className="block mb-2">Room Name</label>
-                        <input
-                          type="text"
-                          value={roomName}
-                          onChange={(e) => setRoomName(e.target.value)}
-                          placeholder="Enter Room Name"
-                          className="mb-4 w-full p-2 border rounded"
-                        />
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block mb-2">Admin Key</label>
-                        <input
-                          type="text"
-                          value={adminKey}
-                          onChange={(e) => setAdminKey(e.target.value)}
-                          placeholder="Enter Admin Key"
-                          className="mb-4 w-full p-2 border rounded"
-                        />
-                      </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button className="bg-red-500 hover:bg-red-600 text-white" onClick={closeCard}>
-                      Close
-                    </Button>
-                    <Button
-                      className="bg-blue-500 hover:bg-blue-600 text-white"
-                      onClick={activeCard === "create" ? handleCreateRoom : handleJoinRoom}
-                    >
-                      {activeCard === "create" ? "Create" : "Submit"}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </div>
+  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="bg-white rounded-lg shadow-lg p-6 w-80 max-w-md">
+      <Card className="shadow-lg rounded-lg">
+        <CardHeader>
+          <CardTitle>{activeCard === "create" ? "Create Room" : "Join Room"}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {activeCard === "create" ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Name</label>
+              <input
+                type="text"
+                value={adminName}
+                onChange={(e) => setAdminName(e.target.value)}
+                placeholder="Enter Admin Name"
+                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <label className="block text-sm font-medium text-gray-700 mb-2">Room Name</label>
+              <input
+                type="text"
+                value={roomName}
+                onChange={(e) => setRoomName(e.target.value)}
+                placeholder="Enter Room Name"
+                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Key</label>
+              <input
+                type="text"
+                value={adminKey}
+                onChange={(e) => setAdminKey(e.target.value)}
+                placeholder="Enter Admin Key"
+                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           )}
+        </CardContent>
+        <CardFooter className="flex justify-between space-x-2">
+          <Button
+            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg"
+            onClick={closeCard}
+          >
+            Close
+          </Button>
+          <Button
+            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg"
+            onClick={activeCard === "create" ? handleCreateRoom : handleJoinRoom}
+          >
+            {activeCard === "create" ? "Create" : "Submit"}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  </div>
+)}
+
 
           {/* Help Text */}
           <div className="mt-6">
@@ -205,9 +209,6 @@ const Rooms = () => {
     </Card>
   ))}
 </div>
-
-           
-            
           </div>
         </div>
       </div>
