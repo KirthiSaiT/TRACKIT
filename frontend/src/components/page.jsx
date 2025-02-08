@@ -9,44 +9,56 @@ import {
   HelpCircle,
   ChevronLeft,
   ChevronRight,
+  Users,
+  Copy,
+  ArrowRightCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Rooms = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar toggle state
-  const [activeCard, setActiveCard] = useState(null); // Tracks active card: "create" or "join"
-  const [adminName, setAdminName] = useState(""); // For creating room
-  const [roomName, setRoomName] = useState(""); // For creating room
-  const [adminKey, setAdminKey] = useState(""); // For joining room
-  const [rooms, setRooms] = useState([]); // To store created rooms
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeCard, setActiveCard] = useState(null);
+  const [adminName, setAdminName] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const [adminKey, setAdminKey] = useState("");
+  const [rooms, setRooms] = useState([]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   const openCard = (type) => {
-    setActiveCard(type); // Set active card based on button click
+    setActiveCard(type);
   };
 
   const closeCard = () => {
-    setActiveCard(null); // Close active card
+    setActiveCard(null);
+    setAdminName("");
+    setRoomName("");
+    setAdminKey("");
   };
 
   const handleCreateRoom = () => {
-    // Create a random admin key
+    if (!adminName || !roomName) return; // Basic validation
+    
     const randomKey = Math.random().toString(36).substring(7);
-    const newRoom = { adminName, roomName, adminKey: randomKey };
+    const newRoom = { 
+      adminName, 
+      roomName, 
+      adminKey: randomKey 
+    };
 
-    // Add the new room to the list and reset the form
-    setRooms([...rooms, newRoom]);
-    setAdminName("");
-    setRoomName("");
+    setRooms(prevRooms => [...prevRooms, newRoom]);
     closeCard();
   };
 
   const handleJoinRoom = () => {
-    // Handle join room logic (for now, just close the modal)
+    if (!adminKey) return;
     closeCard();
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
   };
 
   return (
@@ -109,12 +121,12 @@ const Rooms = () => {
       </button>
 
       {/* Main Content */}
-      <div className="flex-1 p-8">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">Create or Join Room here!</h2>
+      <div className="flex-1 p-8 overflow-y-auto">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl font-bold text-white mb-4 text-center">Create or Join Room here!</h2>
 
           {/* Action Buttons */}
-          <div className="flex justify-center space-x-4">
+          <div className="flex justify-center space-x-4 mb-8">
             <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={() => openCard("create")}>
               Create room
             </Button>
@@ -123,96 +135,134 @@ const Rooms = () => {
             </Button>
           </div>
 
-          {/* Active Card */}
+          {/* Modal */}
           {activeCard && (
-  <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-    <div className="bg-white rounded-lg shadow-lg p-6 w-80 max-w-md">
-      <Card className="shadow-lg rounded-lg">
-        <CardHeader>
-          <CardTitle>{activeCard === "create" ? "Create Room" : "Join Room"}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {activeCard === "create" ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Name</label>
-              <input
-                type="text"
-                value={adminName}
-                onChange={(e) => setAdminName(e.target.value)}
-                placeholder="Enter Admin Name"
-                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <label className="block text-sm font-medium text-gray-700 mb-2">Room Name</label>
-              <input
-                type="text"
-                value={roomName}
-                onChange={(e) => setRoomName(e.target.value)}
-                placeholder="Enter Room Name"
-                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          ) : (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Admin Key</label>
-              <input
-                type="text"
-                value={adminKey}
-                onChange={(e) => setAdminKey(e.target.value)}
-                placeholder="Enter Admin Key"
-                className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-zinc-900 rounded-lg shadow-lg p-6 w-80 max-w-md">
+                <Card className="bg-zinc-900 border-zinc-800">
+                  <CardHeader>
+                    <CardTitle className="text-white">
+                      {activeCard === "create" ? "Create Room" : "Join Room"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {activeCard === "create" ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-zinc-400 mb-2">
+                            Admin Name
+                          </label>
+                          <input
+                            type="text"
+                            value={adminName}
+                            onChange={(e) => setAdminName(e.target.value)}
+                            placeholder="Enter Admin Name"
+                            className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-zinc-400 mb-2">
+                            Room Name
+                          </label>
+                          <input
+                            type="text"
+                            value={roomName}
+                            onChange={(e) => setRoomName(e.target.value)}
+                            placeholder="Enter Room Name"
+                            className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-zinc-400 mb-2">
+                          Admin Key
+                        </label>
+                        <input
+                          type="text"
+                          value={adminKey}
+                          onChange={(e) => setAdminKey(e.target.value)}
+                          placeholder="Enter Admin Key"
+                          className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="flex justify-between space-x-2">
+                    <Button
+                      variant="ghost"
+                      className="text-zinc-400 hover:text-white hover:bg-zinc-800"
+                      onClick={closeCard}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={activeCard === "create" ? handleCreateRoom : handleJoinRoom}
+                    >
+                      {activeCard === "create" ? "Create" : "Join"}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
             </div>
           )}
-        </CardContent>
-        <CardFooter className="flex justify-between space-x-2">
-          <Button
-            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg"
-            onClick={closeCard}
-          >
-            Close
-          </Button>
-          <Button
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg"
-            onClick={activeCard === "create" ? handleCreateRoom : handleJoinRoom}
-          >
-            {activeCard === "create" ? "Create" : "Submit"}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
-  </div>
-)}
 
-
-          {/* Help Text */}
-          <div className="mt-6">
-            <p className="text-white">Need help? Contact support!</p>
+          {/* Rooms Display */}
+          <div className="mt-8">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {rooms.map((room, index) => (
+                <Card key={index} className="bg-zinc-900/50 border border-zinc-800 shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl font-medium text-white">
+                          {room.roomName}
+                        </CardTitle>
+                        <p className="mt-1.5 flex items-center text-zinc-400">
+                          <Users className="w-4 h-4 mr-1.5" />
+                          Managed by {room.adminName}
+                        </p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-zinc-800/50 rounded-lg p-3 mt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-zinc-400">Admin Key</span>
+                        <button 
+                          onClick={() => copyToClipboard(room.adminKey)}
+                          className="text-zinc-400 hover:text-white transition-colors"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <code className="block mt-1 text-sm font-mono text-emerald-400">
+                        {room.adminKey}
+                      </code>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="flex justify-between">
+                    <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-800">
+                      Settings
+                    </Button>
+                    <Button className="bg-emerald-600 hover:bg-emerald-700">
+                      <ArrowRightCircle className="w-4 h-4 mr-2" />
+                      Enter Room
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
           </div>
 
-          {/* Display Created Rooms */}
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-  {rooms.map((room, index) => (
-    <Card key={index} className="bg-gradient-to-r from-gray-500 via-green-400 to-gray-600 p-6 w-full max-w-xs rounded-xl shadow-xl backdrop-blur-xl border border-transparent transition-transform hover:scale-105">
-      <CardHeader>
-        <CardTitle className="text-white font-semibold text-2xl">{room.roomName}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-white">
-        <div className="flex justify-between items-center mb-4">
-          <p className="text-sm font-medium text-gray-200">Admin:</p>
-          <p className="text-sm">{room.adminName}</p>
-        </div>
-        <div className="flex justify-between items-center">
-          <p className="text-sm font-medium text-gray-200">Admin Key:</p>
-          <p className="text-sm truncate">{room.adminKey}</p>
-        </div>
-      </CardContent>
-    </Card>
-  ))}
-</div>
+          {/* Help Text */}
+          <div className="mt-6 text-center">
+            <p className="text-zinc-400">Need help? Contact support!</p>
           </div>
         </div>
       </div>
-    
+    </div>
   );
 };
 
