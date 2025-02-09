@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+const API_URL = 'http://localhost:3000/api';
+
 const Rooms = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeCard, setActiveCard] = useState(null);
@@ -22,6 +24,27 @@ const Rooms = () => {
   const [roomName, setRoomName] = useState("");
   const [adminKey, setAdminKey] = useState("");
   const [rooms, setRooms] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/rooms`);
+      if (!response.ok) throw new Error('Failed to fetch rooms');
+      const data = await response.json();
+      setRooms(data);
+    } catch (err) {
+      setError('Error fetching rooms');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -29,6 +52,7 @@ const Rooms = () => {
 
   const openCard = (type) => {
     setActiveCard(type);
+    setError(null); // Clear any previous errors
   };
 
   const closeCard = () => {
@@ -36,10 +60,14 @@ const Rooms = () => {
     setAdminName("");
     setRoomName("");
     setAdminKey("");
+    setError(null);
   };
 
-  const handleCreateRoom = () => {
-    if (!adminName || !roomName) return; // Basic validation
+  const handleCreateRoom = async () => {
+    if (!adminName || !roomName) {
+      setError("Please fill in all fields");
+      return;
+    }
     
     const randomKey = Math.random().toString(36).substring(7);
     const newRoom = { 
@@ -48,17 +76,57 @@ const Rooms = () => {
       adminKey: randomKey 
     };
 
-    setRooms(prevRooms => [...prevRooms, newRoom]);
-    closeCard();
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/rooms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newRoom)
+      });
+
+      if (!response.ok) throw new Error('Failed to create room');
+      
+      await fetchRooms();
+      closeCard();
+    } catch (err) {
+      setError('Error creating room');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleJoinRoom = () => {
-    if (!adminKey) return;
-    closeCard();
+  const handleJoinRoom = async () => {
+    if (!adminKey) {
+      setError("Please enter an admin key");
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/rooms/${adminKey}`);
+      if (!response.ok) throw new Error('Room not found');
+      
+      const room = await response.json();
+      // Handle successful room join here
+      closeCard();
+    } catch (err) {
+      setError('Invalid admin key');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // Could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy text:', err);
+    }
   };
 
   return (
@@ -127,10 +195,18 @@ const Rooms = () => {
 
           {/* Action Buttons */}
           <div className="flex justify-center space-x-4 mb-8">
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white" onClick={() => openCard("create")}>
+            <Button 
+              className="bg-blue-500 hover:bg-blue-600 text-white" 
+              onClick={() => openCard("create")}
+              disabled={loading}
+            >
               Create room
             </Button>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => openCard("join")}>
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white" 
+              onClick={() => openCard("join")}
+              disabled={loading}
+            >
               Join room
             </Button>
           </div>
@@ -146,6 +222,11 @@ const Rooms = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {error && (
+                      <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-sm">
+                        {error}
+                      </div>
+                    )}
                     {activeCard === "create" ? (
                       <div className="space-y-4">
                         <div>
@@ -158,6 +239,7 @@ const Rooms = () => {
                             onChange={(e) => setAdminName(e.target.value)}
                             placeholder="Enter Admin Name"
                             className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={loading}
                           />
                         </div>
                         <div>
@@ -170,6 +252,7 @@ const Rooms = () => {
                             onChange={(e) => setRoomName(e.target.value)}
                             placeholder="Enter Room Name"
                             className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={loading}
                           />
                         </div>
                       </div>
@@ -184,6 +267,7 @@ const Rooms = () => {
                           onChange={(e) => setAdminKey(e.target.value)}
                           placeholder="Enter Admin Key"
                           className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          disabled={loading}
                         />
                       </div>
                     )}
@@ -193,14 +277,16 @@ const Rooms = () => {
                       variant="ghost"
                       className="text-zinc-400 hover:text-white hover:bg-zinc-800"
                       onClick={closeCard}
+                      disabled={loading}
                     >
                       Cancel
                     </Button>
                     <Button
                       className="bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={activeCard === "create" ? handleCreateRoom : handleJoinRoom}
+                      disabled={loading}
                     >
-                      {activeCard === "create" ? "Create" : "Join"}
+                      {loading ? "Loading..." : (activeCard === "create" ? "Create" : "Join")}
                     </Button>
                   </CardFooter>
                 </Card>
@@ -211,48 +297,58 @@ const Rooms = () => {
           {/* Rooms Display */}
           <div className="mt-8">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {rooms.map((room, index) => (
-                <Card key={index} className="bg-zinc-900/50 border border-zinc-800 shadow-xl hover:shadow-2xl transition-all duration-300">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-xl font-medium text-white">
-                          {room.roomName}
-                        </CardTitle>
-                        <p className="mt-1.5 flex items-center text-zinc-400">
-                          <Users className="w-4 h-4 mr-1.5" />
-                          Managed by {room.adminName}
-                        </p>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-zinc-800/50 rounded-lg p-3 mt-2">
+              {loading && !rooms.length ? (
+                <div className="col-span-full text-center text-zinc-400">
+                  Loading rooms...
+                </div>
+              ) : rooms.length === 0 ? (
+                <div className="col-span-full text-center text-zinc-400">
+                  No rooms available. Create one to get started!
+                </div>
+              ) : (
+                rooms.map((room, index) => (
+                  <Card key={index} className="bg-zinc-900/50 border border-zinc-800 shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <CardHeader>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-zinc-400">Admin Key</span>
-                        <button 
-                          onClick={() => copyToClipboard(room.adminKey)}
-                          className="text-zinc-400 hover:text-white transition-colors"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
+                        <div>
+                          <CardTitle className="text-xl font-medium text-white">
+                            {room.roomName}
+                          </CardTitle>
+                          <p className="mt-1.5 flex items-center text-zinc-400">
+                            <Users className="w-4 h-4 mr-1.5" />
+                            Managed by {room.adminName}
+                          </p>
+                        </div>
                       </div>
-                      <code className="block mt-1 text-sm font-mono text-emerald-400">
-                        {room.adminKey}
-                      </code>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="flex justify-between">
-                    <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-800">
-                      Settings
-                    </Button>
-                    <Button className="bg-emerald-600 hover:bg-emerald-700">
-                      <ArrowRightCircle className="w-4 h-4 mr-2" />
-                      Enter Room
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="bg-zinc-800/50 rounded-lg p-3 mt-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-zinc-400">Admin Key</span>
+                          <button 
+                            onClick={() => copyToClipboard(room.adminKey)}
+                            className="text-zinc-400 hover:text-white transition-colors"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <code className="block mt-1 text-sm font-mono text-emerald-400">
+                          {room.adminKey}
+                        </code>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-between">
+                      <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-800">
+                        Settings
+                      </Button>
+                      <Button className="bg-emerald-600 hover:bg-emerald-700">
+                        <ArrowRightCircle className="w-4 h-4 mr-2" />
+                        Enter Room
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))
+              )}
             </div>
           </div>
 
