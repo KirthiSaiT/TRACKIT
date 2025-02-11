@@ -11,7 +11,8 @@ import {
   ChevronRight,
   Users,
   Copy,
-  ArrowRightCircle
+  ArrowRightCircle,
+  Trash2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -46,13 +47,32 @@ const Rooms = () => {
     }
   };
 
+  const handleDelete = async (adminKey) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/rooms/${adminKey}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) throw new Error('Failed to delete room');
+      
+      // Remove the deleted room from the state
+      setRooms(rooms.filter(room => room.adminKey !== adminKey));
+    } catch (err) {
+      setError('Error deleting room');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   const openCard = (type) => {
     setActiveCard(type);
-    setError(null); // Clear any previous errors
+    setError(null);
   };
 
   const closeCard = () => {
@@ -110,7 +130,6 @@ const Rooms = () => {
       if (!response.ok) throw new Error('Room not found');
       
       const room = await response.json();
-      // Handle successful room join here
       closeCard();
     } catch (err) {
       setError('Invalid admin key');
@@ -123,7 +142,6 @@ const Rooms = () => {
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      // Could add a toast notification here
     } catch (err) {
       console.error('Failed to copy text:', err);
     }
@@ -338,8 +356,14 @@ const Rooms = () => {
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-between">
-                      <Button variant="ghost" className="text-zinc-400 hover:text-white hover:bg-zinc-800">
-                        Settings
+                      <Button 
+                        variant="ghost" 
+                        className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
+                        onClick={() => handleDelete(room.adminKey)}
+                        disabled={loading}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
                       </Button>
                       <Button className="bg-emerald-600 hover:bg-emerald-700">
                         <ArrowRightCircle className="w-4 h-4 mr-2" />

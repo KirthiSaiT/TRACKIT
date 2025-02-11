@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Rooms from './components/page.jsx';
 
+
 // Placeholder components for undefined components
 const ItemOne = () => <div>Item One Content</div>;
 const ItemTwo = () => <div>Item Two Content</div>;
