@@ -15,6 +15,7 @@ import {
   Trash2
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import Maps from "./maps";
 
 const API_URL = 'http://localhost:3000/api';
 

@@ -37,7 +37,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Rooms from './components/page.jsx';
+import StatisticsAndSolutions from './components/StatisticsAndSolutions';
 import Maps from './components/maps.jsx';
+import GlobalSecurity from './components/GlobalSecurity';
 
 
 // Placeholder components for undefined components
@@ -276,10 +278,14 @@ function App() {
           } />
           <Route path="/How-To" element={<ItemOne />} />
           <Route path="/Rooms" element={<Rooms />} />
+          <Route path="/${room/admin.key}" element={<Maps />} />
           <Route path="/how-to" element={<HowTo />} />
           <Route path="/products" element={<Products />} />
           <Route path="/about" element={<AboutUs />} />
         </Routes>
+        {/* After the features div */}
+<StatisticsAndSolutions />
+<GlobalSecurity />
       </div>
     </BrowserRouter>
   );
