@@ -14,11 +14,15 @@ import {
   ArrowRightCircle,
   Trash2
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const API_URL = 'http://localhost:3000/api';
+const handleEnterRoom = (roomName) => {
+  router.push(`/maps`); // Navigate to maps page
+};
 
 const Rooms = () => {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeCard, setActiveCard] = useState(null);
   const [adminName, setAdminName] = useState("");
@@ -56,7 +60,6 @@ const Rooms = () => {
 
       if (!response.ok) throw new Error('Failed to delete room');
       
-      // Remove the deleted room from the state
       setRooms(rooms.filter(room => room.adminKey !== adminKey));
     } catch (err) {
       setError('Error deleting room');
@@ -145,6 +148,10 @@ const Rooms = () => {
     } catch (err) {
       console.error('Failed to copy text:', err);
     }
+  };
+
+  const handleEnterRoom = (roomId) => {
+    navigate(`/maps/${roomId}`);
   };
 
   return (
@@ -365,10 +372,13 @@ const Rooms = () => {
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete
                       </Button>
-                      <Button className="bg-emerald-600 hover:bg-emerald-700">
-                        <ArrowRightCircle className="w-4 h-4 mr-2" />
-                        Enter Room
-                      </Button>
+                      <Button
+      className="bg-emerald-600 hover:bg-emerald-700"
+      onClick={() => handleEnterRoom(room.roomName)}
+    >
+      <ArrowRightCircle className="w-4 h-4 mr-2" />
+      Enter Room
+    </Button>
                     </CardFooter>
                   </Card>
                 ))

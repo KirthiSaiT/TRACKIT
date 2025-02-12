@@ -37,6 +37,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Rooms from './components/page.jsx';
+import Maps from './components/maps.jsx';
 
 
 // Placeholder components for undefined components
