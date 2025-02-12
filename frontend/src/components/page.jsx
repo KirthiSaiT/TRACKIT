@@ -17,9 +17,6 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 
 const API_URL = 'http://localhost:3000/api';
-const handleEnterRoom = (roomName) => {
-  router.push(`/maps`); // Navigate to maps page
-};
 
 const Rooms = () => {
   const navigate = useNavigate();
@@ -373,12 +370,12 @@ const Rooms = () => {
                         Delete
                       </Button>
                       <Button
-      className="bg-emerald-600 hover:bg-emerald-700"
-      onClick={() => handleEnterRoom(room.roomName)}
-    >
-      <ArrowRightCircle className="w-4 h-4 mr-2" />
-      Enter Room
-    </Button>
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                        onClick={() => handleEnterRoom(room.adminKey)}
+                      >
+                        <ArrowRightCircle className="w-4 h-4 mr-2" />
+                        Enter Room
+                      </Button>
                     </CardFooter>
                   </Card>
                 ))
