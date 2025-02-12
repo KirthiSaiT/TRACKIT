@@ -149,7 +149,7 @@ const Rooms = () => {
   };
 
   const handleEnterRoom = (roomId) => {
-    navigate(`/maps/${roomId}`);
+    navigate(`/Rooms/${roomId}`);
   };
 
   return (
@@ -390,6 +390,7 @@ const Rooms = () => {
           </div>
         </div>
       </div>
+      
     </div>
   );
 };

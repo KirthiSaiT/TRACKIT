@@ -278,14 +278,18 @@ function App() {
           } />
           <Route path="/How-To" element={<ItemOne />} />
           <Route path="/Rooms" element={<Rooms />} />
+
+          <Route path="/Rooms/:RoomId" element={<Maps />} />
+=======
           <Route path="/${room/admin.key}" element={<Maps />} />
+
           <Route path="/how-to" element={<HowTo />} />
           <Route path="/products" element={<Products />} />
           <Route path="/about" element={<AboutUs />} />
         </Routes>
         {/* After the features div */}
-<StatisticsAndSolutions />
-<GlobalSecurity />
+{/* <StatisticsAndSolutions />
+<GlobalSecurity /> */}
       </div>
     </BrowserRouter>
   );
