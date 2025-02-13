@@ -158,22 +158,20 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST", "DELETE"], // Added DELETE to allowed methods
+    methods: ["GET", "POST", "DELETE"],
   },
 });
 
 // Middleware
 app.use(express.json());
 app.use(cors());
-app.set("view engine", "ejs");
-app.use(express.static(path.join(__dirname, "public")));
 
-// MongoDB Atlas Connection
+// MongoDB connection
 const MONGODB_URI = "mongodb+srv://ADMIN:ADMIN1234@backenddb.pczr0.mongodb.net/Node-API?retryWrites=true&w=majority&appName=BackendDB";
 
 mongoose.connect(MONGODB_URI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
-  .catch((err) => console.error("❌ Error connecting to MongoDB Atlas:", err));
+  .catch((err) => console.error("❌ MongoDB Error:", err));
 
 // Room Schema
 const roomSchema = new mongoose.Schema({
@@ -185,10 +183,7 @@ const roomSchema = new mongoose.Schema({
 
 const Room = mongoose.model('Room', roomSchema);
 
-// Routes
-app.get("/", (req, res) => res.send("Backend is running successfully"));
-
-// Create a new room
+// API Routes
 app.post('/api/rooms', async (req, res) => {
   try {
     const { adminName, roomName, adminKey } = req.body;
@@ -200,7 +195,6 @@ app.post('/api/rooms', async (req, res) => {
   }
 });
 
-// Get all rooms
 app.get('/api/rooms', async (req, res) => {
   try {
     const rooms = await Room.find().sort({ createdAt: -1 });
@@ -210,7 +204,6 @@ app.get('/api/rooms', async (req, res) => {
   }
 });
 
-// Get room by adminKey
 app.get('/api/rooms/:adminKey', async (req, res) => {
   try {
     const room = await Room.findOne({ adminKey: req.params.adminKey });
@@ -221,41 +214,48 @@ app.get('/api/rooms/:adminKey', async (req, res) => {
   }
 });
 
-// Delete room by adminKey
 app.delete('/api/rooms/:adminKey', async (req, res) => {
   try {
     const { adminKey } = req.params;
-    const deletedRoom = await Room.findOneAndDelete({ adminKey: adminKey });
-
-    if (!deletedRoom) {
-      return res.status(404).json({ message: 'Room not found' });
-    }
-
+    const deletedRoom = await Room.findOneAndDelete({ adminKey });
+    if (!deletedRoom) return res.status(404).json({ message: 'Room not found' });
     res.status(200).json({ message: 'Room deleted successfully' });
   } catch (error) {
-    console.error('Error deleting room:', error);
     res.status(500).json({ message: 'Error deleting room', error: error.message });
   }
 });
 
-// Store connected users' locations
+// Real-time tracking
 const users = {};
 
-io.on("connection", (socket) => {
+io.on('connection', (socket) => {
   console.log(`✅ User connected: ${socket.id}`);
 
-  socket.on("send-location", ({ latitude, longitude }) => {
-    users[socket.id] = { latitude, longitude };
-    io.emit("receive-location", { id: socket.id, latitude, longitude });
+  const userNumber = Object.keys(users).length + 1;
+  users[socket.id] = { latitude: null, longitude: null, userNumber };
+
+  socket.emit('current-users', users);
+
+  socket.on('send-location', ({ latitude, longitude }) => {
+    if (users[socket.id]) {
+      users[socket.id].latitude = latitude;
+      users[socket.id].longitude = longitude;
+
+      io.emit('receive-location', {
+        id: socket.id,
+        latitude,
+        longitude,
+        userNumber: users[socket.id].userNumber,
+      });
+    }
   });
 
-  socket.on("disconnect", () => {
+  socket.on('disconnect', () => {
     delete users[socket.id];
-    io.emit("user-disconnected", socket.id);
+    io.emit('user-disconnected', socket.id);
     console.log(`❌ User disconnected: ${socket.id}`);
   });
 });
 
-// Start server
 const PORT = 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
