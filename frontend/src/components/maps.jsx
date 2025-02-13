@@ -1,83 +1,111 @@
-import React, { useEffect } from "react";
-import { io } from "socket.io-client";
-import * as L from "leaflet";
+import React, { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import io from "socket.io-client";
 
-// Connect to backend
-const socket = io("http://localhost:3000");
+// Fix for missing Leaflet marker icons
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
 
-const RealTimeTracking = () => {
+const DefaultIcon = L.icon({
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const socket = io("http://localhost:3000"); // Change if using deployed backend
+
+const Maps = ({ adminKey }) => {
+  const [markers, setMarkers] = useState({});
+  const [userLocation, setUserLocation] = useState(null);
+  const [roomExists, setRoomExists] = useState(true);
+
   useEffect(() => {
-    const map = L.map("map").setView([20.5937, 78.9629], 5); // Default India view
+    if (!adminKey) return;
 
-    // Add OpenStreetMap tiles
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors",
-    }).addTo(map);
+    // Check if room exists in MongoDB before joining
+    fetch(`http://localhost:3000/api/rooms/${adminKey}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.message === "Room not found") {
+          setRoomExists(false);
+        } else {
+          socket.emit("join-room", adminKey);
+        }
+      })
+      .catch((error) => console.error("Room check error:", error));
 
-    const markers = {}; // Store markers for each user
-
-    // Function to create custom marker icon
-    const createMarkerIcon = (color) =>
-      L.icon({
-        iconUrl: `https://via.placeholder.com/40/${color}/ffffff?text=●`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-        popupAnchor: [0, -40],
-      });
-
-    // Get real-time location
-    if (navigator.geolocation) {
-      navigator.geolocation.watchPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          socket.emit("send-location", { latitude, longitude });
-        },
-        (error) => console.error("❌ GPS Error:", error),
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      console.error("❌ Geolocation not supported");
-    }
-
-    // Listen for location updates
-    socket.on("receive-location", ({ id, latitude, longitude, userNumber }) => {
-      if (markers[id]) {
-        markers[id].setLatLng([latitude, longitude]); // Move existing marker
-      } else {
-        const color = ["FF0000", "0000FF", "008000", "FFA500", "800080", "FF1493", "00CED1", "FFD700"][userNumber % 8];
-        markers[id] = L.marker([latitude, longitude], { icon: createMarkerIcon(color) })
-          .addTo(map)
-          .bindPopup(`User ${userNumber}`);
-      }
+    socket.on("current-users", (users) => {
+      setMarkers(users);
     });
 
-    // Remove marker when a user disconnects
+    socket.on("receive-location", ({ id, latitude, longitude }) => {
+      setMarkers((prev) => ({
+        ...prev,
+        [id]: { latitude, longitude },
+      }));
+    });
+
     socket.on("user-disconnected", (id) => {
-      if (markers[id]) {
-        map.removeLayer(markers[id]);
-        delete markers[id];
-      }
+      setMarkers((prev) => {
+        const updatedMarkers = { ...prev };
+        delete updatedMarkers[id];
+        return updatedMarkers;
+      });
     });
 
     return () => {
       socket.off("receive-location");
       socket.off("user-disconnected");
-      map.remove();
+      socket.off("current-users");
     };
-  }, []);
+  }, [adminKey]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ latitude, longitude });
+
+          socket.emit("send-location", { latitude, longitude, roomId: adminKey });
+        },
+        (error) => console.error("Geolocation Error:", error),
+        { enableHighAccuracy: true }
+      );
+    }
+  }, [adminKey]);
 
   return (
-    <div className="flex flex-col h-screen w-screen">
-      <header className="bg-gray-800 text-white text-center p-4 text-xl">
-        Real-Time Tracking
-      </header>
-      <div id="map" className="flex-grow w-full h-full"></div>
-      <footer className="bg-gray-800 text-white text-center p-2">
-        &copy; 2024 TRACK1T
-      </footer>
+    <div className="h-screen w-full">
+      {!roomExists ? (
+        <div className="flex justify-center items-center h-full text-red-600 text-xl font-bold">
+          Room Not Found
+        </div>
+      ) : (
+        <MapContainer center={[20.5937, 78.9629]} zoom={5} className="h-full w-full">
+          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+          {Object.entries(markers).map(([id, { latitude, longitude }]) => (
+            <Marker key={id} position={[latitude, longitude]} icon={DefaultIcon}>
+              <Popup>User {id}</Popup>
+            </Marker>
+          ))}
+
+          {userLocation && (
+            <Marker position={[userLocation.latitude, userLocation.longitude]} icon={DefaultIcon}>
+              <Popup>You</Popup>
+            </Marker>
+          )}
+        </MapContainer>
+      )}
     </div>
   );
 };
 
-export default RealTimeTracking;
+export default Maps;

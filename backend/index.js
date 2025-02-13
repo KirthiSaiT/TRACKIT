@@ -150,9 +150,9 @@ import http from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -168,7 +168,6 @@ app.use(cors());
 
 // MongoDB connection
 const MONGODB_URI = "mongodb+srv://ADMIN:ADMIN1234@backenddb.pczr0.mongodb.net/Node-API?retryWrites=true&w=majority&appName=BackendDB";
-
 mongoose.connect(MONGODB_URI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
   .catch((err) => console.error("❌ MongoDB Error:", err));
@@ -181,7 +180,31 @@ const roomSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// User Session Schema
+const userSessionSchema = new mongoose.Schema({
+  socketId: { type: String, required: true },
+  token: { type: String, required: true, unique: true },
+  ip: { type: String, required: true },
+  roomId: { type: String, required: true },
+  lastActive: { type: Date, default: Date.now },
+  markerType: { type: String, default: 'default' },
+  location: {
+    latitude: { type: Number },
+    longitude: { type: Number }
+  }
+});
+
 const Room = mongoose.model('Room', roomSchema);
+const UserSession = mongoose.model('UserSession', userSessionSchema);
+
+// Helper function to generate unique token
+const generateToken = () => crypto.randomBytes(16).toString('hex');
+
+// Helper function to assign marker type
+const getMarkerType = (index) => {
+  const markerTypes = ['default', 'star', 'circle', 'square', 'triangle'];
+  return markerTypes[index % markerTypes.length];
+};
 
 // API Routes
 app.post('/api/rooms', async (req, res) => {
@@ -219,41 +242,101 @@ app.delete('/api/rooms/:adminKey', async (req, res) => {
     const { adminKey } = req.params;
     const deletedRoom = await Room.findOneAndDelete({ adminKey });
     if (!deletedRoom) return res.status(404).json({ message: 'Room not found' });
+    
+    // Clean up associated user sessions
+    await UserSession.deleteMany({ roomId: adminKey });
     res.status(200).json({ message: 'Room deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting room', error: error.message });
   }
 });
 
-// Real-time tracking
+// Real-time tracking with room-based markers
 const users = {};
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log(`✅ User connected: ${socket.id}`);
-
-  const userNumber = Object.keys(users).length + 1;
-  users[socket.id] = { latitude: null, longitude: null, userNumber };
-
-  socket.emit('current-users', users);
-
-  socket.on('send-location', ({ latitude, longitude }) => {
-    if (users[socket.id]) {
-      users[socket.id].latitude = latitude;
-      users[socket.id].longitude = longitude;
-
-      io.emit('receive-location', {
-        id: socket.id,
-        latitude,
-        longitude,
-        userNumber: users[socket.id].userNumber,
+  
+  const clientIp = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address;
+  
+  socket.on('join-room', async (roomId) => {
+    try {
+      socket.join(roomId);
+      if (!users[roomId]) users[roomId] = {};
+      
+      // Generate and store user token
+      const token = generateToken();
+      const userCount = Object.keys(users[roomId]).length;
+      const markerType = getMarkerType(userCount);
+      
+      // Create user session in database
+      const userSession = new UserSession({
+        socketId: socket.id,
+        token: token,
+        ip: clientIp,
+        roomId: roomId,
+        markerType: markerType
       });
+      await userSession.save();
+      
+      users[roomId][socket.id] = {
+        latitude: null,
+        longitude: null,
+        token: token,
+        markerType: markerType
+      };
+      
+      // Emit current users with their marker types
+      socket.emit('session-created', { token, markerType });
+      socket.emit('current-users', users[roomId]);
+      console.log(`📍 User ${socket.id} joined room ${roomId} with token ${token}`);
+    } catch (error) {
+      console.error('Error in join-room:', error);
     }
   });
 
-  socket.on('disconnect', () => {
-    delete users[socket.id];
-    io.emit('user-disconnected', socket.id);
-    console.log(`❌ User disconnected: ${socket.id}`);
+  socket.on('send-location', async ({ latitude, longitude, roomId, token }) => {
+    try {
+      if (users[roomId] && users[roomId][socket.id]) {
+        users[roomId][socket.id].latitude = latitude;
+        users[roomId][socket.id].longitude = longitude;
+        
+        // Update location in database
+        await UserSession.findOneAndUpdate(
+          { token: token },
+          { 
+            'location.latitude': latitude,
+            'location.longitude': longitude,
+            lastActive: new Date()
+          }
+        );
+        
+        io.to(roomId).emit('receive-location', {
+          id: socket.id,
+          latitude,
+          longitude,
+          markerType: users[roomId][socket.id].markerType
+        });
+      }
+    } catch (error) {
+      console.error('Error in send-location:', error);
+    }
+  });
+
+  socket.on('disconnect', async () => {
+    try {
+      for (const roomId in users) {
+        if (users[roomId][socket.id]) {
+          const userToken = users[roomId][socket.id].token;
+          delete users[roomId][socket.id];
+          await UserSession.findOneAndDelete({ token: userToken });
+          io.to(roomId).emit('user-disconnected', socket.id);
+        }
+      }
+      console.log(`❌ User disconnected: ${socket.id}`);
+    } catch (error) {
+      console.error('Error in disconnect:', error);
+    }
   });
 });
 
