@@ -158,7 +158,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "DELETE"], // Added DELETE to allowed methods
   },
 });
 
@@ -210,10 +210,10 @@ app.get('/api/rooms', async (req, res) => {
   }
 });
 
-// Get room by ID
-app.get('/api/rooms/:roomId', async (req, res) => {
+// Get room by adminKey
+app.get('/api/rooms/:adminKey', async (req, res) => {
   try {
-    const room = await Room.findById(req.params.roomId);
+    const room = await Room.findOne({ adminKey: req.params.adminKey });
     if (!room) return res.status(404).json({ message: 'Room not found' });
     res.json(room);
   } catch (error) {
@@ -221,14 +221,20 @@ app.get('/api/rooms/:roomId', async (req, res) => {
   }
 });
 
-// Delete room
-app.delete('/api/rooms/:roomId', async (req, res) => {
+// Delete room by adminKey
+app.delete('/api/rooms/:adminKey', async (req, res) => {
   try {
-    const room = await Room.findByIdAndDelete(req.params.roomId);
-    if (!room) return res.status(404).json({ message: 'Room not found' });
-    res.json({ message: 'Room deleted successfully' });
+    const { adminKey } = req.params;
+    const deletedRoom = await Room.findOneAndDelete({ adminKey: adminKey });
+
+    if (!deletedRoom) {
+      return res.status(404).json({ message: 'Room not found' });
+    }
+
+    res.status(200).json({ message: 'Room deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting room", error: error.message });
+    console.error('Error deleting room:', error);
+    res.status(500).json({ message: 'Error deleting room', error: error.message });
   }
 });
 

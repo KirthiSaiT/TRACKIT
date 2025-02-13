@@ -15,7 +15,6 @@ import {
   Trash2
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import Maps from "./maps";
 
 const API_URL = 'http://localhost:3000/api';
 
@@ -29,6 +28,7 @@ const Rooms = () => {
   const [rooms, setRooms] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     fetchRooms();
@@ -38,12 +38,16 @@ const Rooms = () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/rooms`);
-      if (!response.ok) throw new Error('Failed to fetch rooms');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to fetch rooms');
+      }
       const data = await response.json();
       setRooms(data);
+      setError(null);
     } catch (err) {
-      setError('Error fetching rooms');
-      console.error(err);
+      setError('Error fetching rooms: ' + err.message);
+      console.error('Fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -54,16 +58,33 @@ const Rooms = () => {
       setLoading(true);
       const response = await fetch(`${API_URL}/rooms/${adminKey}`, {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
-      if (!response.ok) throw new Error('Failed to delete room');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to delete room');
+      }
       
-      setRooms(rooms.filter(room => room.adminKey !== adminKey));
+      setRooms(prevRooms => prevRooms.filter(room => room.adminKey !== adminKey));
+      setSuccessMessage('Room deleted successfully');
+      setError(null);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
-      setError('Error deleting room');
-      console.error(err);
+      console.error('Delete error:', err);
+      setError('Error deleting room: ' + err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const confirmDelete = (adminKey) => {
+    if (window.confirm('Are you sure you want to delete this room? This action cannot be undone.')) {
+      handleDelete(adminKey);
     }
   };
 
@@ -74,6 +95,7 @@ const Rooms = () => {
   const openCard = (type) => {
     setActiveCard(type);
     setError(null);
+    setSuccessMessage('');
   };
 
   const closeCard = () => {
@@ -82,6 +104,7 @@ const Rooms = () => {
     setRoomName("");
     setAdminKey("");
     setError(null);
+    setSuccessMessage('');
   };
 
   const handleCreateRoom = async () => {
@@ -107,13 +130,17 @@ const Rooms = () => {
         body: JSON.stringify(newRoom)
       });
 
-      if (!response.ok) throw new Error('Failed to create room');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to create room');
+      }
       
       await fetchRooms();
+      setSuccessMessage('Room created successfully');
       closeCard();
     } catch (err) {
-      setError('Error creating room');
-      console.error(err);
+      setError('Error creating room: ' + err.message);
+      console.error('Create error:', err);
     } finally {
       setLoading(false);
     }
@@ -128,13 +155,18 @@ const Rooms = () => {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/rooms/${adminKey}`);
-      if (!response.ok) throw new Error('Room not found');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Room not found');
+      }
       
       const room = await response.json();
+      setSuccessMessage('Successfully joined room');
       closeCard();
+      handleEnterRoom(adminKey);
     } catch (err) {
-      setError('Invalid admin key');
-      console.error(err);
+      setError('Error joining room: ' + err.message);
+      console.error('Join error:', err);
     } finally {
       setLoading(false);
     }
@@ -143,8 +175,11 @@ const Rooms = () => {
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
+      setSuccessMessage('Admin key copied to clipboard');
+      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       console.error('Failed to copy text:', err);
+      setError('Failed to copy admin key');
     }
   };
 
@@ -215,6 +250,20 @@ const Rooms = () => {
       <div className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-2xl font-bold text-white mb-4 text-center">Create or Join Room here!</h2>
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mb-4 p-2 bg-green-500/10 border border-green-500/20 rounded text-green-500 text-sm text-center">
+              {successMessage}
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-sm text-center">
+              {error}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex justify-center space-x-4 mb-8">
@@ -351,6 +400,7 @@ const Rooms = () => {
                           <button 
                             onClick={() => copyToClipboard(room.adminKey)}
                             className="text-zinc-400 hover:text-white transition-colors"
+                            title="Copy admin key"
                           >
                             <Copy className="w-4 h-4" />
                           </button>
@@ -364,15 +414,16 @@ const Rooms = () => {
                       <Button 
                         variant="ghost" 
                         className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
-                        onClick={() => handleDelete(room.adminKey)}
+                        onClick={() => confirmDelete(room.adminKey)}
                         disabled={loading}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete
                       </Button>
                       <Button
-                        className="bg-emerald-600 hover:bg-emerald-700"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={() => handleEnterRoom(room.adminKey)}
+                        disabled={loading}
                       >
                         <ArrowRightCircle className="w-4 h-4 mr-2" />
                         Enter Room
@@ -386,11 +437,13 @@ const Rooms = () => {
 
           {/* Help Text */}
           <div className="mt-6 text-center">
-            <p className="text-zinc-400">Need help? Contact support!</p>
+            <p className="text-zinc-400 flex items-center justify-center">
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Need help? Contact support!
+            </p>
           </div>
         </div>
       </div>
-      
     </div>
   );
 };
