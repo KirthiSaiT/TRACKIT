@@ -149,10 +149,11 @@ import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-
-// Middleware
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -161,8 +162,11 @@ const io = new Server(server, {
   },
 });
 
+// Middleware
 app.use(express.json());
 app.use(cors());
+app.set("view engine", "ejs");
+app.use(express.static(path.join(__dirname, "public")));
 
 // MongoDB Atlas Connection
 const MONGODB_URI = "mongodb+srv://ADMIN:ADMIN1234@backenddb.pczr0.mongodb.net/Node-API?retryWrites=true&w=majority&appName=BackendDB";
@@ -173,9 +177,9 @@ mongoose.connect(MONGODB_URI)
 
 // Room Schema
 const roomSchema = new mongoose.Schema({
-  adminName: String,
-  roomName: String,
-  adminKey: String,
+  adminName: { type: String, required: true },
+  roomName: { type: String, required: true },
+  adminKey: { type: String, required: true, unique: true },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -184,6 +188,7 @@ const Room = mongoose.model('Room', roomSchema);
 // Routes
 app.get("/", (req, res) => res.send("Backend is running successfully"));
 
+// Create a new room
 app.post('/api/rooms', async (req, res) => {
   try {
     const { adminName, roomName, adminKey } = req.body;
@@ -195,6 +200,7 @@ app.post('/api/rooms', async (req, res) => {
   }
 });
 
+// Get all rooms
 app.get('/api/rooms', async (req, res) => {
   try {
     const rooms = await Room.find().sort({ createdAt: -1 });
@@ -204,6 +210,7 @@ app.get('/api/rooms', async (req, res) => {
   }
 });
 
+// Get room by ID
 app.get('/api/rooms/:roomId', async (req, res) => {
   try {
     const room = await Room.findById(req.params.roomId);
@@ -214,5 +221,17 @@ app.get('/api/rooms/:roomId', async (req, res) => {
   }
 });
 
+// Delete room
+app.delete('/api/rooms/:roomId', async (req, res) => {
+  try {
+    const room = await Room.findByIdAndDelete(req.params.roomId);
+    if (!room) return res.status(404).json({ message: 'Room not found' });
+    res.json({ message: 'Room deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting room", error: error.message });
+  }
+});
+
+// Start server
 const PORT = 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
