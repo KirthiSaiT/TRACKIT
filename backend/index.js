@@ -232,6 +232,24 @@ app.delete('/api/rooms/:roomId', async (req, res) => {
   }
 });
 
+// Store connected users' locations
+const users = {};
+
+io.on("connection", (socket) => {
+  console.log(`✅ User connected: ${socket.id}`);
+
+  socket.on("send-location", ({ latitude, longitude }) => {
+    users[socket.id] = { latitude, longitude };
+    io.emit("receive-location", { id: socket.id, latitude, longitude });
+  });
+
+  socket.on("disconnect", () => {
+    delete users[socket.id];
+    io.emit("user-disconnected", socket.id);
+    console.log(`❌ User disconnected: ${socket.id}`);
+  });
+});
+
 // Start server
 const PORT = 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
