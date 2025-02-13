@@ -69,10 +69,26 @@ const GlobalSecurity = () => {
     controls.maxDistance = 4;
     controlsRef.current = controls;
 
-    // Textures
+    // Texture Loader
     const textureLoader = new THREE.TextureLoader();
-    const earthTexture = textureLoader.load('/frontend/public/track1t globe1.jpg');
-    const bumpMap = textureLoader.load('/frontend/public/track1t globe2.jpg');
+
+    // Load Earth textures
+    const earthTexture = textureLoader.load('/frontend/public/track1t globe1.jpg', texture => {
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    });
+
+    const bumpMap = textureLoader.load('/frontend/public/track1t globe2.jpg', texture => {
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    });
+
+    const specularMap = textureLoader.load('/earth/specular.jpg', texture => {
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    });
+
+    const cloudsTexture = textureLoader.load('/earth/clouds.jpg', texture => {
+      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    });
 
     // Earth
     const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
@@ -80,11 +96,22 @@ const GlobalSecurity = () => {
       map: earthTexture,
       bumpMap: bumpMap,
       bumpScale: 0.05,
+      specularMap: specularMap,
       specular: new THREE.Color(0x333333),
       shininess: 25,
     });
     const earth = new THREE.Mesh(earthGeometry, earthMaterial);
     scene.add(earth);
+
+    // Clouds
+    const cloudsGeometry = new THREE.SphereGeometry(1.01, 64, 64);
+    const cloudsMaterial = new THREE.MeshPhongMaterial({
+      map: cloudsTexture,
+      transparent: true,
+      opacity: 0.4,
+    });
+    const clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
+    scene.add(clouds);
 
     // Atmosphere
     const atmosphereGeometry = new THREE.SphereGeometry(1.1, 64, 64);
@@ -92,7 +119,7 @@ const GlobalSecurity = () => {
       transparent: true,
       side: THREE.BackSide,
       uniforms: {
-        glowColor: { value: new THREE.Color(0x00ff00) },
+        glowColor: { value: new THREE.Color(0x0066ff) },  // Changed to blue
         viewVector: { value: camera.position }
       },
       vertexShader: `
@@ -110,7 +137,7 @@ const GlobalSecurity = () => {
         uniform vec3 glowColor;
         void main() {
           float intensity = pow(0.7 - dot(vNormal, vPositionNormal), 2.0);
-          gl_FragColor = vec4(glowColor, intensity * 0.5);
+          gl_FragColor = vec4(glowColor, intensity * 0.3);
         }
       `
     });
@@ -118,12 +145,21 @@ const GlobalSecurity = () => {
     scene.add(atmosphere);
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
     scene.add(ambientLight);
     
-    const pointLight = new THREE.PointLight(0xffffff, 1);
-    pointLight.position.set(5, 3, 5);
-    scene.add(pointLight);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1);
+    sunLight.position.set(5, 3, 5);
+    scene.add(sunLight);
+
+    // Add point lights for better illumination
+    const pointLight1 = new THREE.PointLight(0xffffff, 0.5);
+    pointLight1.position.set(-5, 3, -5);
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(0xffffff, 0.3);
+    pointLight2.position.set(0, -5, 0);
+    scene.add(pointLight2);
 
     // Connection lines
     const createConnectionLine = (startLat, startLng, endLat, endLng) => {
@@ -158,7 +194,7 @@ const GlobalSecurity = () => {
       return new THREE.Vector3(x, y, z);
     };
 
-    // Add some example connections
+    // Add connections
     const connections = [
       { start: [35.6762, 139.6503], end: [40.7128, -74.0060] },  // Tokyo to New York
       { start: [51.5074, -0.1278], end: [-33.8688, 151.2093] },  // London to Sydney
@@ -170,6 +206,15 @@ const GlobalSecurity = () => {
       scene.add(line);
     });
 
+    // Animation
+    const animate = () => {
+      requestAnimationFrame(animate);
+      earth.rotation.y += 0.001;
+      clouds.rotation.y += 0.0012;  // Clouds rotate slightly faster
+      controls.update();
+      renderer.render(scene, camera);
+    };
+
     // Handle window resize
     const handleResize = () => {
       if (!mountRef.current) return;
@@ -180,14 +225,6 @@ const GlobalSecurity = () => {
     };
 
     window.addEventListener('resize', handleResize);
-
-    // Animation
-    const animate = () => {
-      requestAnimationFrame(animate);
-      earth.rotation.y += 0.001;
-      controls.update();
-      renderer.render(scene, camera);
-    };
     animate();
 
     // Cleanup

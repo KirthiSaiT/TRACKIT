@@ -42,6 +42,7 @@ import Maps from './components/maps.jsx';
 import GlobalSecurity from './components/GlobalSecurity';
 
 
+
 // Placeholder components for undefined components
 const ItemOne = () => <div>Item One Content</div>;
 const ItemTwo = () => <div>Item Two Content</div>;
@@ -273,6 +274,8 @@ function App() {
                     <FeatureCard key={index} {...feature} />
                   ))}
                 </div>
+                <StatisticsAndSolutions/>
+                <GlobalSecurity/>
               </div>
             </>
           } />
@@ -280,17 +283,17 @@ function App() {
           <Route path="/Rooms" element={<Rooms />} />
 
           <Route path="/Rooms/:RoomId" element={<Maps />} />
-=======
-          <Route path="/${room/admin.key}" element={<Maps />} />
+{/* 
+          <Route path="/${room/admin.key}" element={<Maps />} /> */}
 
           <Route path="/how-to" element={<HowTo />} />
           <Route path="/products" element={<Products />} />
           <Route path="/about" element={<AboutUs />} />
         </Routes>
         {/* After the features div */}
-{/* <StatisticsAndSolutions />
-<GlobalSecurity /> */}
+      
       </div>
+      
     </BrowserRouter>
   );
 }
