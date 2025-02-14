@@ -58,11 +58,11 @@ const StatisticsAndSolutions = () => {
   ];
 
   return (
-    <div className="w-full py-16 px-4 md:px-8 bg-black/50">
+    <div className="relative w-full  py-16 px-4 md:px-8 bg-black/50 mt-8">
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Statistics Section */}
-          <div className="space-y-6">
+          <div className=" relative h-36 top-14  space-y-6">
             <Card className="bg-zinc-900/50 border-zinc-800">
               <CardHeader>
                 <CardTitle className="text-2xl text-white">

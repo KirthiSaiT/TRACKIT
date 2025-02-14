@@ -23,7 +23,8 @@ import {
   Clock,
   Shield,
   Bell,
-  Settings
+  Settings,
+  LogIn
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
@@ -40,14 +41,19 @@ import Rooms from './components/page.jsx';
 import StatisticsAndSolutions from './components/StatisticsAndSolutions';
 import Maps from './components/maps.jsx';
 import GlobalSecurity from './components/GlobalSecurity';
-
+import FirebaseAuth from './components/login.jsx';
+import Login from './components/login.jsx'
+import Footer from './components/footer.jsx';
+import ContactUs from './components/contactus.jsx';
+import HowTo from './components/howto.jsx';
+import Products from './components/products.jsx';
 
 
 // Placeholder components for undefined components
 const ItemOne = () => <div>Item One Content</div>;
 const ItemTwo = () => <div>Item Two Content</div>;
-const HowTo = () => <div>How To Content</div>;
-const Products = () => <div>Products Content</div>;
+const HowIs = () => <div>How To Content</div>;
+const Pro = () => <div>Products Content</div>;
 const AboutUs = () => <div>About Us Content</div>;
 
 const FeatureCard = ({ icon: Icon, title, description }) => (
@@ -116,7 +122,7 @@ function App() {
             <div className="hidden md:flex items-center space-x-6">
               <MenubarMenu>
                 <MenubarTrigger className="text-gray-300">
-                  <Link to="/How-To">How To</Link>
+                  <Link to="/howto">How To</Link>
                 </MenubarTrigger>
               </MenubarMenu>
               <MenubarMenu>
@@ -131,12 +137,12 @@ function App() {
               </MenubarMenu>
               <MenubarMenu>
                 <MenubarTrigger className="text-gray-300">
-                  <Link to="?Contact-Us">Contact Us</Link>
+                  <Link to="/Contactus">Contact Us</Link>
                 </MenubarTrigger>
               </MenubarMenu>
               <MenubarMenu>
                 <MenubarTrigger className="text-gray-300">
-                  <Link to="/kirthi">Kirthi</Link>
+                  <Link to="/Login">Login</Link>
                 </MenubarTrigger>
               </MenubarMenu>
             </div>
@@ -150,11 +156,11 @@ function App() {
         {isOpen && (
           <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-90">
             <div className="flex flex-col items-center pt-20 space-y-6">
-              <Link to="/How-To" className="text-white text-lg" onClick={() => setIsOpen(false)}>How To</Link>
+              <Link to="/howto" className="text-white text-lg" onClick={() => setIsOpen(false)}>How To</Link>
               <Link to="/Rooms" className="text-white text-lg" onClick={() => setIsOpen(false)}>Rooms</Link>
               <Link to="/Products" className="text-white text-lg" onClick={() => setIsOpen(false)}>Products</Link>
-              <Link to="/Contact-Us" className="text-white text-lg" onClick={() => setIsOpen(false)}>Contact Us</Link>
-              <Link to="/kirthi" className="text-white text-lg" onClick={() => setIsOpen(false)}>kirthi</Link>
+              <Link to="/Contactus" className="text-white text-lg" onClick={() => setIsOpen(false)}>Contact Us</Link>
+              <Link to="/Login" className="text-white text-lg" onClick={() => setIsOpen(true)}>Login</Link>
             </div>
           </div>
         )}
@@ -276,21 +282,19 @@ function App() {
                 </div>
                 <StatisticsAndSolutions/>
                 <GlobalSecurity/>
+                <Footer/>
               </div>
             </>
           } />
-          <Route path="/How-To" element={<ItemOne />} />
-          <Route path="/Rooms" element={<Rooms />} />
-
-          <Route path="/Rooms/:RoomId" element={<Maps />} />
-{/* 
-          <Route path="/${room/admin.key}" element={<Maps />} /> */}
-
-          <Route path="/how-to" element={<HowTo />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/about" element={<AboutUs />} />
+          <Route path="/howto" element={<HowTo />} />
+  <Route path="/Rooms" element={<Rooms />} />
+  <Route path="/Rooms/:RoomId" element={<Maps />} />
+  <Route path="/Contactus" element={<ContactUs/>} />
+  <Route path="/products" element={<Products />} />
+  <Route path="/about" element={<AboutUs />} />
+  <Route path="/Login" element={<Login />} />
         </Routes>
-        {/* After the features div */}
+        
       
       </div>
       
