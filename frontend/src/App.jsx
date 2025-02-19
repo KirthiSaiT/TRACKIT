@@ -47,6 +47,7 @@ import Footer from './components/footer.jsx';
 import ContactUs from './components/contactus.jsx';
 import HowTo from './components/howto.jsx';
 import Products from './components/products.jsx';
+import Sos from './components/sos.jsx';
 
 // Placeholder components
 const ItemOne = () => <div>Item One Content</div>;

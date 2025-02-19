@@ -9,6 +9,7 @@ import { AlertCircle } from "lucide-react";
 // Fix for missing Leaflet marker icons
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import Sos from "./sos";
 
 const DefaultIcon = L.icon({
   iconUrl: markerIcon,
@@ -39,7 +40,6 @@ const Maps = ({ adminKey }) => {
   const [userLocation, setUserLocation] = useState(null);
   const [roomExists, setRoomExists] = useState(true);
   const [isEmergency, setIsEmergency] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -108,17 +108,8 @@ const Maps = ({ adminKey }) => {
     }
   }, [adminKey, isEmergency]);
 
-  const handleSOSClick = () => {
-    if (!isEmergency) {
-      setShowConfirm(true);
-    } else {
-      setIsEmergency(false);
-    }
-  };
-
-  const confirmSOS = () => {
+  const handleEmergencyAlert = async () => {
     setIsEmergency(true);
-    setShowConfirm(false);
     if (userLocation) {
       socket.emit("emergency-signal", {
         latitude: userLocation.latitude,
@@ -156,32 +147,8 @@ const Maps = ({ adminKey }) => {
             )}
           </MapContainer>
 
-          {showConfirm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000]">
-              <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm mx-4">
-                <h3 className="text-xl font-bold mb-4">Confirm Emergency Alert</h3>
-                <p className="mb-6 text-gray-600">Are you sure you want to send an emergency signal? This will alert all connected users.</p>
-                <div className="flex justify-end gap-4">
-                  <Button variant="outline" onClick={() => setShowConfirm(false)} className="hover:bg-gray-100">
-                    Cancel
-                  </Button>
-                  <Button variant="destructive" onClick={confirmSOS} className="bg-red-600 hover:bg-red-700">
-                    Send Alert
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="fixed bottom-8 right-6 z-[1000]">
-            <Button
-              size="lg"
-              className={`font-bold shadow-xl flex items-center gap-2 px-8 py-6 text-lg transition-all duration-300 ${isEmergency ? "bg-red-600 hover:bg-red-700 animate-pulse" : "bg-red-600 hover:bg-red-700"}`}
-              onClick={handleSOSClick}
-            >
-              <AlertCircle className="h-6 w-6" />
-              {isEmergency ? "CANCEL EMERGENCY" : "SOS"}
-            </Button>
+            <Sos onEmergencyAlert={handleEmergencyAlert} isEmergency={isEmergency} />
           </div>
         </>
       )}
