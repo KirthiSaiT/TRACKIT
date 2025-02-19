@@ -322,22 +322,6 @@ io.on('connection', async (socket) => {
       console.error('Error in send-location:', error);
     }
   });
-
-  socket.on('disconnect', async () => {
-    try {
-      for (const roomId in users) {
-        if (users[roomId][socket.id]) {
-          const userToken = users[roomId][socket.id].token;
-          delete users[roomId][socket.id];
-          await UserSession.findOneAndDelete({ token: userToken });
-          io.to(roomId).emit('user-disconnected', socket.id);
-        }
-      }
-      console.log(`❌ User disconnected: ${socket.id}`);
-    } catch (error) {
-      console.error('Error in disconnect:', error);
-    }
-  });
 });
 
 const PORT = 3000;

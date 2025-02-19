@@ -42,11 +42,8 @@ const Maps = ({ adminKey }) => {
   const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    // Prevent scrolling on the body when component mounts
     document.body.style.overflow = 'hidden';
-    
     return () => {
-      // Re-enable scrolling when component unmounts
       document.body.style.overflow = 'unset';
     };
   }, []);
@@ -143,7 +140,7 @@ const Maps = ({ adminKey }) => {
             center={[20.5937, 78.9629]}
             zoom={8}
             className="w-full h-full"
-            zoomControl={false} // Disable default zoom control
+            zoomControl={false}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             {userLocation && <MapCenter userLocation={userLocation} />}
@@ -159,25 +156,16 @@ const Maps = ({ adminKey }) => {
             )}
           </MapContainer>
 
-          {/* Confirmation Modal */}
           {showConfirm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000]">
               <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm mx-4">
                 <h3 className="text-xl font-bold mb-4">Confirm Emergency Alert</h3>
                 <p className="mb-6 text-gray-600">Are you sure you want to send an emergency signal? This will alert all connected users.</p>
                 <div className="flex justify-end gap-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowConfirm(false)}
-                    className="hover:bg-gray-100"
-                  >
+                  <Button variant="outline" onClick={() => setShowConfirm(false)} className="hover:bg-gray-100">
                     Cancel
                   </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={confirmSOS}
-                    className="bg-red-600 hover:bg-red-700"
-                  >
+                  <Button variant="destructive" onClick={confirmSOS} className="bg-red-600 hover:bg-red-700">
                     Send Alert
                   </Button>
                 </div>
@@ -185,15 +173,10 @@ const Maps = ({ adminKey }) => {
             </div>
           )}
 
-          {/* SOS Button */}
           <div className="fixed bottom-8 right-6 z-[1000]">
             <Button
               size="lg"
-              className={`font-bold shadow-xl flex items-center gap-2 px-8 py-6 text-lg transition-all duration-300 ${
-                isEmergency 
-                  ? "bg-red-600 hover:bg-red-700 animate-pulse" 
-                  : "bg-red-600 hover:bg-red-700"
-              }`}
+              className={`font-bold shadow-xl flex items-center gap-2 px-8 py-6 text-lg transition-all duration-300 ${isEmergency ? "bg-red-600 hover:bg-red-700 animate-pulse" : "bg-red-600 hover:bg-red-700"}`}
               onClick={handleSOSClick}
             >
               <AlertCircle className="h-6 w-6" />
