@@ -151,6 +151,11 @@ import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import dotenv from 'dotenv';
+import twilio from 'twilio';
+
+// Initialize environment variables
+dotenv.config();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -162,6 +167,9 @@ const io = new Server(server, {
   },
 });
 
+// Initialize Twilio client
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
 // Middleware
 app.use(express.json());
 app.use(cors());
@@ -172,7 +180,7 @@ mongoose.connect(MONGODB_URI)
   .then(() => console.log("✅ Connected to MongoDB Atlas"))
   .catch((err) => console.error("❌ MongoDB Error:", err));
 
-// Room Schema
+// Schemas
 const roomSchema = new mongoose.Schema({
   adminName: { type: String, required: true },
   roomName: { type: String, required: true },
@@ -180,7 +188,6 @@ const roomSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-// User Session Schema
 const userSessionSchema = new mongoose.Schema({
   socketId: { type: String, required: true },
   token: { type: String, required: true, unique: true },
@@ -197,13 +204,80 @@ const userSessionSchema = new mongoose.Schema({
 const Room = mongoose.model('Room', roomSchema);
 const UserSession = mongoose.model('UserSession', userSessionSchema);
 
-// Helper function to generate unique token
+// Helper Functions
 const generateToken = () => crypto.randomBytes(16).toString('hex');
 
-// Helper function to assign marker type
 const getMarkerType = (index) => {
   const markerTypes = ['default', 'star', 'circle', 'square', 'triangle'];
   return markerTypes[index % markerTypes.length];
+};
+
+// Emergency Alert Function
+// Emergency Alert Function
+const sendEmergencyAlerts = async (location) => {
+  const emergencyMessage = `🚨 Emergency Alert! Location: ${location.latitude}, ${location.longitude}. Please take immediate action.`;
+  const phoneNumbers = ['+919123587980', '+919952941725']; // Add your emergency contact numbers
+
+  try {
+    const results = [];
+    for (const to of phoneNumbers) {
+      try {
+        // Send SMS
+        const smsResponse = await twilioClient.messages.create({
+          body: emergencyMessage,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to
+        });
+        results.push({ type: "SMS", to, sid: smsResponse.sid });
+      } catch (error) {
+        console.error('SMS Error:', error);
+        results.push({ type: "SMS", to, error: error.message });
+      }
+
+      try {
+        // Send WhatsApp Message - Using correct formatting
+        const whatsappFrom = process.env.TWILIO_WHATSAPP_NUMBER.startsWith('whatsapp:') 
+          ? process.env.TWILIO_WHATSAPP_NUMBER 
+          : `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`;
+        
+        const whatsappTo = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+        
+        const whatsappResponse = await twilioClient.messages.create({
+          body: emergencyMessage,
+          from: whatsappFrom,
+          to: whatsappTo
+        });
+        results.push({ type: "WhatsApp", to, sid: whatsappResponse.sid });
+      } catch (error) {
+        console.error('WhatsApp Error:', error);
+        results.push({ type: "WhatsApp", to, error: error.message });
+      }
+
+      try {
+        // Make Phone Call
+        const callResponse = await twilioClient.calls.create({
+          twiml: `<Response><Say>${emergencyMessage}</Say></Response>`,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to
+        });
+        results.push({ type: "Call", to, sid: callResponse.sid });
+      } catch (error) {
+        console.error('Call Error:', error);
+        results.push({ type: "Call", to, error: error.message });
+      }
+    }
+
+    // Check if any communications were successful
+    const hasSuccessfulCommunication = results.some(result => result.sid);
+    if (!hasSuccessfulCommunication) {
+      throw new Error('All communication methods failed');
+    }
+
+    return { success: true, results };
+  } catch (error) {
+    console.error('Emergency Alert Error:', error);
+    return { success: false, error: error.message, details: results };
+  }
 };
 
 // API Routes
@@ -243,7 +317,6 @@ app.delete('/api/rooms/:adminKey', async (req, res) => {
     const deletedRoom = await Room.findOneAndDelete({ adminKey });
     if (!deletedRoom) return res.status(404).json({ message: 'Room not found' });
     
-    // Clean up associated user sessions
     await UserSession.deleteMany({ roomId: adminKey });
     res.status(200).json({ message: 'Room deleted successfully' });
   } catch (error) {
@@ -251,7 +324,22 @@ app.delete('/api/rooms/:adminKey', async (req, res) => {
   }
 });
 
-// Real-time tracking with room-based markers
+// Emergency Alert Endpoint
+app.post('/send-alert', async (req, res) => {
+  try {
+    const { location } = req.body;
+    const alertResult = await sendEmergencyAlerts(location);
+    if (alertResult.success) {
+      res.status(200).json({ success: true, message: "Alerts sent successfully!", results: alertResult.results });
+    } else {
+      res.status(500).json({ success: false, error: alertResult.error });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Socket.io Real-time tracking
 const users = {};
 
 io.on('connection', async (socket) => {
@@ -264,12 +352,10 @@ io.on('connection', async (socket) => {
       socket.join(roomId);
       if (!users[roomId]) users[roomId] = {};
       
-      // Generate and store user token
       const token = generateToken();
       const userCount = Object.keys(users[roomId]).length;
       const markerType = getMarkerType(userCount);
       
-      // Create user session in database
       const userSession = new UserSession({
         socketId: socket.id,
         token: token,
@@ -286,7 +372,6 @@ io.on('connection', async (socket) => {
         markerType: markerType
       };
       
-      // Emit current users with their marker types
       socket.emit('session-created', { token, markerType });
       socket.emit('current-users', users[roomId]);
       console.log(`📍 User ${socket.id} joined room ${roomId} with token ${token}`);
@@ -301,7 +386,6 @@ io.on('connection', async (socket) => {
         users[roomId][socket.id].latitude = latitude;
         users[roomId][socket.id].longitude = longitude;
         
-        // Update location in database
         await UserSession.findOneAndUpdate(
           { token: token },
           { 
@@ -322,7 +406,34 @@ io.on('connection', async (socket) => {
       console.error('Error in send-location:', error);
     }
   });
+
+  socket.on('emergency-signal', async ({ latitude, longitude, roomId }) => {
+    try {
+      const alertResult = await sendEmergencyAlerts({ latitude, longitude });
+      socket.emit('emergency-response', alertResult);
+      
+      // Broadcast emergency to all users in the room
+      io.to(roomId).emit('emergency-broadcast', {
+        userId: socket.id,
+        location: { latitude, longitude },
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Error in emergency-signal:', error);
+      socket.emit('emergency-response', { success: false, error: error.message });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`❌ User disconnected: ${socket.id}`);
+    Object.keys(users).forEach(roomId => {
+      if (users[roomId][socket.id]) {
+        delete users[roomId][socket.id];
+        io.to(roomId).emit('user-disconnected', socket.id);
+      }
+    });
+  });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
