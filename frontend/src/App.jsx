@@ -228,7 +228,7 @@ function App() {
                     </CardContent>
                   </Card>
 
-                  <Card className="relative md:absolute md:bottom-52 md:right-10 bg-zinc-900/50 border-zinc-800 w-full md:w-64 rounded-xl backdrop-blur-sm transition-transform hover:scale-105">
+                  <Card className="relative md:absolute md:bottom-64 md:right-10 bg-zinc-900/50 border-zinc-800 w-full md:w-64 rounded-xl backdrop-blur-sm transition-transform hover:scale-105">
                     <CardContent className="p-4 sm:p-6">
                       <div className="flex items-center gap-3 mb-3">
                         <Avatar className="h-8 w-8">
@@ -284,9 +284,9 @@ function App() {
                   ))}
                 </div>
 
-                <div className="mt-12 sm:mt-16">
+                {/* <div className="mt-12 sm:mt-16">
                   <StatisticsAndSolutions />
-                </div>
+                </div> */}
 
                 <div className="mt-12 sm:mt-16">
                   <GlobalSecurity />

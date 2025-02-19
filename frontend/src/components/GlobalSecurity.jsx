@@ -1,16 +1,8 @@
-
-import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Lock, Network, Globe2 } from 'lucide-react';
+import React, { useState } from "react";
+import { Shield, Lock, Network, Globe2, Bell, AlertTriangle, CheckCircle, ToggleLeft, ToggleRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 const GlobalSecurity = () => {
-  const mountRef = useRef(null);
-  const controlsRef = useRef(null);
-  const sceneRef = useRef(null);
-  const rendererRef = useRef(null);
-
   const securityFeatures = [
     {
       icon: Shield,
@@ -34,246 +26,70 @@ const GlobalSecurity = () => {
     }
   ];
 
-  useEffect(() => {
-    if (!mountRef.current) return;
-
-    // Scene setup
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-
-    // Camera setup
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      mountRef.current.clientWidth / mountRef.current.clientHeight,
-      0.1,
-      1000
-    );
-    camera.position.z = 2;
-
-    // Renderer setup
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-    });
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-    renderer.setClearColor(0x000000, 0);
-    mountRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    // Controls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.rotateSpeed = 0.5;
-    controls.enableZoom = true;
-    controls.minDistance = 1.5;
-    controls.maxDistance = 4;
-    controlsRef.current = controls;
-
-    // Texture Loader
-    const textureLoader = new THREE.TextureLoader();
-
-    // Load Earth textures
-    const earthTexture = textureLoader.load('/frontend/public/track1t globe1.jpg', texture => {
-      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    });
-
-    const bumpMap = textureLoader.load('/frontend/public/track1t globe2.jpg', texture => {
-      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    });
-
-    const specularMap = textureLoader.load('/earth/specular.jpg', texture => {
-      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    });
-
-    const cloudsTexture = textureLoader.load('/earth/clouds.jpg', texture => {
-      texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    });
-
-    // Earth
-    const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
-    const earthMaterial = new THREE.MeshPhongMaterial({
-      map: earthTexture,
-      bumpMap: bumpMap,
-      bumpScale: 0.05,
-      specularMap: specularMap,
-      specular: new THREE.Color(0x333333),
-      shininess: 25,
-    });
-    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-    scene.add(earth);
-
-    // Clouds
-    const cloudsGeometry = new THREE.SphereGeometry(1.01, 64, 64);
-    const cloudsMaterial = new THREE.MeshPhongMaterial({
-      map: cloudsTexture,
-      transparent: true,
-      opacity: 0.4,
-    });
-    const clouds = new THREE.Mesh(cloudsGeometry, cloudsMaterial);
-    scene.add(clouds);
-
-    // Atmosphere
-    const atmosphereGeometry = new THREE.SphereGeometry(1.1, 64, 64);
-    const atmosphereMaterial = new THREE.ShaderMaterial({
-      transparent: true,
-      side: THREE.BackSide,
-      uniforms: {
-        glowColor: { value: new THREE.Color(0x0066ff) },  // Changed to blue
-        viewVector: { value: camera.position }
-      },
-      vertexShader: `
-        varying vec3 vNormal;
-        varying vec3 vPositionNormal;
-        void main() {
-          vNormal = normalize(normalMatrix * normal);
-          vPositionNormal = normalize(normalMatrix * position);
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vNormal;
-        varying vec3 vPositionNormal;
-        uniform vec3 glowColor;
-        void main() {
-          float intensity = pow(0.7 - dot(vNormal, vPositionNormal), 2.0);
-          gl_FragColor = vec4(glowColor, intensity * 0.3);
-        }
-      `
-    });
-    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-    scene.add(atmosphere);
-
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-    scene.add(ambientLight);
-    
-    const sunLight = new THREE.DirectionalLight(0xffffff, 1);
-    sunLight.position.set(5, 3, 5);
-    scene.add(sunLight);
-
-    // Add point lights for better illumination
-    const pointLight1 = new THREE.PointLight(0xffffff, 0.5);
-    pointLight1.position.set(-5, 3, -5);
-    scene.add(pointLight1);
-
-    const pointLight2 = new THREE.PointLight(0xffffff, 0.3);
-    pointLight2.position.set(0, -5, 0);
-    scene.add(pointLight2);
-
-    // Connection lines
-    const createConnectionLine = (startLat, startLng, endLat, endLng) => {
-      const startPos = latLongToVector3(startLat, startLng);
-      const endPos = latLongToVector3(endLat, endLng);
-      
-      const points = [];
-      for (let i = 0; i <= 100; i++) {
-        const t = i / 100;
-        const pos = new THREE.Vector3().lerpVectors(startPos, endPos, t);
-        pos.normalize();
-        pos.multiplyScalar(1 + Math.sin(Math.PI * t) * 0.2);
-        points.push(pos);
-      }
-      
-      const curve = new THREE.CatmullRomCurve3(points);
-      const geometry = new THREE.TubeGeometry(curve, 100, 0.003, 8, false);
-      const material = new THREE.MeshBasicMaterial({
-        color: 0x00ff00,
-        transparent: true,
-        opacity: 0.6
-      });
-      return new THREE.Mesh(geometry, material);
-    };
-
-    const latLongToVector3 = (lat, lng) => {
-      const phi = (90 - lat) * (Math.PI / 180);
-      const theta = (lng + 180) * (Math.PI / 180);
-      const x = Math.sin(phi) * Math.cos(theta);
-      const y = Math.cos(phi);
-      const z = Math.sin(phi) * Math.sin(theta);
-      return new THREE.Vector3(x, y, z);
-    };
-
-    // Add connections
-    const connections = [
-      { start: [35.6762, 139.6503], end: [40.7128, -74.0060] },  // Tokyo to New York
-      { start: [51.5074, -0.1278], end: [-33.8688, 151.2093] },  // London to Sydney
-      { start: [1.3521, 103.8198], end: [55.7558, 37.6173] }     // Singapore to Moscow
-    ];
-
-    connections.forEach(conn => {
-      const line = createConnectionLine(conn.start[0], conn.start[1], conn.end[0], conn.end[1]);
-      scene.add(line);
-    });
-
-    // Animation
-    const animate = () => {
-      requestAnimationFrame(animate);
-      earth.rotation.y += 0.001;
-      clouds.rotation.y += 0.0012;  // Clouds rotate slightly faster
-      controls.update();
-      renderer.render(scene, camera);
-    };
-
-    // Handle window resize
-    const handleResize = () => {
-      if (!mountRef.current) return;
-      
-      camera.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-    };
-
-    window.addEventListener('resize', handleResize);
-    animate();
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement);
-      }
-      renderer.dispose();
-      scene.clear();
-    };
-  }, []);
+  const [securityStatus, setSecurityStatus] = useState("Secure");
+  const [alertsEnabled, setAlertsEnabled] = useState(true);
+  const [riskLevel, setRiskLevel] = useState("Low");
 
   return (
-    <div className="w-full min-h-screen bg-black/50 py-16 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Security Features */}
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold text-white mb-6">
-              Global <span className="text-pink-500">Security</span> Network
-            </h2>
-            <div className="grid gap-4">
-              {securityFeatures.map((feature, index) => (
-                <Card key={index} className="bg-zinc-900/50 border-zinc-800">
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 bg-green-500/20 rounded-lg">
-                        <feature.icon className="w-6 h-6 text-green-500" />
-                      </div>
-                      <div>
-                        <h3 className="text-white text-lg font-semibold mb-2">
-                          {feature.title}
-                        </h3>
-                        <p className="text-gray-400">
-                          {feature.description}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+    <div className="w-full min-h-screen bg-black py-16 px-4 md:px-8 flex">
+      <div className="max-w-4xl w-2/3">
+        <div className="space-y-6">
+          {securityFeatures.map((feature, index) => (
+            <div key={index} className="bg-zinc-900/80 rounded-lg p-6 border border-zinc-800">
+              <div className="flex items-start gap-4">
+                <div className="p-2 bg-green-900/20 rounded-lg">
+                  <feature.icon className="w-6 h-6 text-green-500" />
+                </div>
+                <div>
+                  <h3 className="text-white text-xl font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-gray-400 text-lg leading-relaxed">{feature.description}</p>
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* Globe Visualization */}
-          <div className="relative h-[600px] bg-black/20 rounded-lg" ref={mountRef} />
+          ))}
         </div>
+      </div>
+
+      {/* Interactive Security Module */}
+      <div className="w-1/3 ml-8">
+        <Card className="bg-zinc-900 border border-zinc-800 rounded-lg p-6">
+          <CardContent>
+            <h2 className="text-white text-xl font-semibold mb-4">Security Status</h2>
+            <div className="flex items-center gap-4 mb-4">
+              {securityStatus === "Secure" ? (
+                <CheckCircle className="text-green-500 w-6 h-6" />
+              ) : (
+                <AlertTriangle className="text-red-500 w-6 h-6" />
+              )}
+              <span className={`text-lg font-medium ${securityStatus === "Secure" ? "text-green-400" : "text-red-400"}`}>
+                {securityStatus}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-gray-300">Risk Level:</span>
+              <span className={`text-lg font-semibold ${riskLevel === "Low" ? "text-green-400" : riskLevel === "Medium" ? "text-yellow-400" : "text-red-400"}`}>{riskLevel}</span>
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-gray-300">Alerts:</span>
+              <button onClick={() => setAlertsEnabled(!alertsEnabled)} className="flex items-center gap-2">
+                {alertsEnabled ? <ToggleRight className="text-green-500 w-6 h-6" /> : <ToggleLeft className="text-gray-500 w-6 h-6" />}
+                <span className={alertsEnabled ? "text-green-400" : "text-gray-400"}>{alertsEnabled ? "Enabled" : "Disabled"}</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => {
+                setSecurityStatus(securityStatus === "Secure" ? "At Risk" : "Secure");
+                setRiskLevel(riskLevel === "Low" ? "High" : "Low");
+              }}
+              className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-lg"
+            >
+              Toggle Security Status
+            </button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
