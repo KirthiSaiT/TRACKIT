@@ -1,451 +1,225 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Home,
-  Calendar,
-  Archive,
-  Settings,
-  HelpCircle,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  Copy,
-  ArrowRightCircle,
-  Trash2
-} from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { initializeApp } from "firebase/app";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  updateProfile 
+} from "firebase/auth";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card.jsx";
+import { Label } from "./ui/label.jsx";
+import { Input } from "./ui/input.jsx";
+import { Button } from "./ui/button.jsx";
 
-const API_URL = 'http://localhost:3000/api';
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyBSxyB1FU-YHZ69ZkAowvj5ECzBf1UfEH8",
+  authDomain: "track-it-d9793.firebaseapp.com",
+  projectId: "track-it-d9793",
+  storageBucket: "track-it-d9793.appspot.com",
+  messagingSenderId: "504320129720",
+  appId: "1:504320129720:web:9e7d4fcf98eabc7a84524d",
+  measurementId: "G-XXF0VYQSPM"
+};
 
-const Rooms = () => {
-  const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeCard, setActiveCard] = useState(null);
-  const [adminName, setAdminName] = useState("");
-  const [roomName, setRoomName] = useState("");
-  const [adminKey, setAdminKey] = useState("");
-  const [rooms, setRooms] = useState([]);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+export default function FirebaseAuth() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  useEffect(() => {
-    fetchRooms();
-  }, []);
-
-  const fetchRooms = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/rooms`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Failed to fetch rooms');
-      }
-      const data = await response.json();
-      setRooms(data);
-      setError(null);
-    } catch (err) {
-      setError('Error fetching rooms: ' + err.message);
-      console.error('Fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
+  // Register User
+  const registerUser = () => {
+    setLoading(true);
+    createUserWithEmailAndPassword(auth, registerEmail, registerPassword)
+      .then((userCredential) => {
+        updateProfile(userCredential.user, { displayName: registerName })
+          .then(() => {
+            setSuccessMessage("Registration Successful!");
+            setTimeout(() => setSuccessMessage(""), 3000);
+          })
+          .catch((error) => setError(error.message));
+      })
+      .catch((error) => setError(error.message))
+      .finally(() => setLoading(false));
   };
 
-  const handleDelete = async (adminKey) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/rooms/${adminKey}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Failed to delete room');
-      }
-      
-      setRooms(prevRooms => prevRooms.filter(room => room.adminKey !== adminKey));
-      setSuccessMessage('Room deleted successfully');
-      setError(null);
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err) {
-      console.error('Delete error:', err);
-      setError('Error deleting room: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
+  // Login User
+  const loginUser = () => {
+    setLoading(true);
+    signInWithEmailAndPassword(auth, loginEmail, loginPassword)
+      .then(() => {
+        setSuccessMessage("Login Successful!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      })
+      .catch((error) => setError(error.message))
+      .finally(() => setLoading(false));
   };
 
-  const confirmDelete = (adminKey) => {
-    if (window.confirm('Are you sure you want to delete this room? This action cannot be undone.')) {
-      handleDelete(adminKey);
-    }
-  };
+  // Google Sign-In
+  const signInWithGoogle = () => {
+    setLoading(true);
+    auth.languageCode = "en";
+    provider.setCustomParameters({ prompt: "select_account" });
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const openCard = (type) => {
-    setActiveCard(type);
-    setError(null);
-    setSuccessMessage('');
-  };
-
-  const closeCard = () => {
-    setActiveCard(null);
-    setAdminName("");
-    setRoomName("");
-    setAdminKey("");
-    setError(null);
-    setSuccessMessage('');
-  };
-
-  const handleCreateRoom = async () => {
-    if (!adminName || !roomName) {
-      setError("Please fill in all fields");
-      return;
-    }
-    
-    const randomKey = Math.random().toString(36).substring(7);
-    const newRoom = { 
-      adminName, 
-      roomName, 
-      adminKey: randomKey 
-    };
-
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/rooms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newRoom)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Failed to create room');
-      }
-      
-      await fetchRooms();
-      setSuccessMessage('Room created successfully');
-      closeCard();
-    } catch (err) {
-      setError('Error creating room: ' + err.message);
-      console.error('Create error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleJoinRoom = async () => {
-    if (!adminKey) {
-      setError("Please enter an admin key");
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/rooms/${adminKey}`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Room not found');
-      }
-      
-      const room = await response.json();
-      setSuccessMessage('Successfully joined room');
-      closeCard();
-      handleEnterRoom(adminKey);
-    } catch (err) {
-      setError('Error joining room: ' + err.message);
-      console.error('Join error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setSuccessMessage('Admin key copied to clipboard');
-      setTimeout(() => setSuccessMessage(''), 3000);
-    } catch (err) {
-      console.error('Failed to copy text:', err);
-      setError('Failed to copy admin key');
-    }
-  };
-
-  const handleEnterRoom = (roomId) => {
-    navigate(`/Rooms/${roomId}`);
+    signInWithPopup(auth, provider)
+      .then(() => {
+        setSuccessMessage("Google Login Successful!");
+        setTimeout(() => setSuccessMessage(""), 3000);
+      })
+      .catch((error) => {
+        if (error.code === "auth/unauthorized-domain") {
+          setError("Error: Unauthorized domain. Please add your domain to Firebase Authentication settings.");
+        } else {
+          setError(error.message);
+        }
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
-    <div className="flex w-full h-[calc(100vh-4rem)] relative">
-      {/* Sidebar */}
-      <div
-        className={`${
-          isSidebarOpen ? "w-64" : "w-16"
-        } bg-zinc-900/50 border-r border-zinc-800 p-4 transition-all duration-300 ease-in-out`}
-      >
-        <nav className="space-y-2">
-          <Link
-            to="/"
-            className="flex items-center space-x-3 p-3 rounded-lg text-white hover:bg-zinc-800/50 overflow-hidden"
-          >
-            <Home className="w-5 h-5 min-w-[20px]" />
-            <span className={`transition-opacity duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0"}`}>
-              Home
-            </span>
-          </Link>
-          <Link
-            to="/calendar"
-            className="flex items-center space-x-3 p-3 rounded-lg text-white hover:bg-zinc-800/50 overflow-hidden"
-          >
-            <Calendar className="w-5 h-5 min-w-[20px]" />
-            <span className={`transition-opacity duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0"}`}>
-              Calendar
-            </span>
-          </Link>
-          <Link
-            to="/archived"
-            className="flex items-center space-x-3 p-3 rounded-lg text-white hover:bg-zinc-800/50 overflow-hidden"
-          >
-            <Archive className="w-5 h-5 min-w-[20px]" />
-            <span className={`transition-opacity duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0"}`}>
-              Archived classes
-            </span>
-          </Link>
-          <Link
-            to="/settings"
-            className="flex items-center space-x-3 p-3 rounded-lg text-white hover:bg-zinc-800/50 overflow-hidden"
-          >
-            <Settings className="w-5 h-5 min-w-[20px]" />
-            <span className={`transition-opacity duration-300 ${isSidebarOpen ? "opacity-100" : "opacity-0"}`}>
-              Settings
-            </span>
-          </Link>
-        </nav>
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-[#121212]">
+      <div className="w-full max-w-md p-8">
+        <Card className="bg-zinc-900/50 border border-zinc-800 shadow-xl">
+          <CardHeader className="space-y-3">
+            <CardTitle className="text-2xl font-bold text-white text-center">
+              {isLogin ? "Welcome Back" : "Create Account"}
+            </CardTitle>
+            <CardDescription className="text-center text-zinc-400">
+              {isLogin ? "Enter your credentials to access your account" : "Enter your information to create an account"}
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            {/* Error Message */}
+            {error && (
+              <div className="p-2 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-sm text-center">
+                {error}
+              </div>
+            )}
 
-      {/* Sidebar Toggle Button */}
-      <button
-        onClick={toggleSidebar}
-        className="absolute left-0 top-4 transform translate-x-64 z-10 bg-zinc-800 hover:bg-zinc-700 text-white p-2 rounded-r-lg transition-transform duration-300"
-        style={{
-          transform: isSidebarOpen ? "translateX(15.5rem)" : "translateX(3.5rem)",
-        }}
-      >
-        {isSidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-      </button>
+            {/* Success Message */}
+            {successMessage && (
+              <div className="p-2 bg-green-500/10 border border-green-500/20 rounded text-green-500 text-sm text-center">
+                {successMessage}
+              </div>
+            )}
 
-      {/* Main Content */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-white mb-4 text-center">Create or Join Room here!</h2>
-
-          {/* Success Message */}
-          {successMessage && (
-            <div className="mb-4 p-2 bg-green-500/10 border border-green-500/20 rounded text-green-500 text-sm text-center">
-              {successMessage}
-            </div>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-sm text-center">
-              {error}
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex justify-center space-x-4 mb-8">
+            {/* Google Sign-In Button */}
             <Button 
-              className="bg-blue-500 hover:bg-blue-600 text-white" 
-              onClick={() => openCard("create")}
+              className="w-full bg-zinc-800/50 text-white hover:bg-zinc-800 border border-zinc-700"
+              variant="outline" 
+              onClick={signInWithGoogle}
               disabled={loading}
             >
-              Create room
+              <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
+                <path
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                  fill="#34A853"
+                />
+                <path
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                  fill="#EA4335"
+                />
+              </svg>
+              Continue with Google
             </Button>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white" 
-              onClick={() => openCard("join")}
-              disabled={loading}
-            >
-              Join room
-            </Button>
-          </div>
 
-          {/* Modal */}
-          {activeCard && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-              <div className="bg-zinc-900 rounded-lg shadow-lg p-6 w-80 max-w-md">
-                <Card className="bg-zinc-900 border-zinc-800">
-                  <CardHeader>
-                    <CardTitle className="text-white">
-                      {activeCard === "create" ? "Create Room" : "Join Room"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {error && (
-                      <div className="mb-4 p-2 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-sm">
-                        {error}
-                      </div>
-                    )}
-                    {activeCard === "create" ? (
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-zinc-400 mb-2">
-                            Admin Name
-                          </label>
-                          <input
-                            type="text"
-                            value={adminName}
-                            onChange={(e) => setAdminName(e.target.value)}
-                            placeholder="Enter Admin Name"
-                            className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={loading}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-zinc-400 mb-2">
-                            Room Name
-                          </label>
-                          <input
-                            type="text"
-                            value={roomName}
-                            onChange={(e) => setRoomName(e.target.value)}
-                            placeholder="Enter Room Name"
-                            className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            disabled={loading}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-sm font-medium text-zinc-400 mb-2">
-                          Admin Key
-                        </label>
-                        <input
-                          type="text"
-                          value={adminKey}
-                          onChange={(e) => setAdminKey(e.target.value)}
-                          placeholder="Enter Admin Key"
-                          className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          disabled={loading}
-                        />
-                      </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="flex justify-between space-x-2">
-                    <Button
-                      variant="ghost"
-                      className="text-zinc-400 hover:text-white hover:bg-zinc-800"
-                      onClick={closeCard}
-                      disabled={loading}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={activeCard === "create" ? handleCreateRoom : handleJoinRoom}
-                      disabled={loading}
-                    >
-                      {loading ? "Loading..." : (activeCard === "create" ? "Create" : "Join")}
-                    </Button>
-                  </CardFooter>
-                </Card>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-zinc-800" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-zinc-900/50 px-2 text-zinc-400">
+                  Or continue with email
+                </span>
               </div>
             </div>
-          )}
 
-          {/* Rooms Display */}
-          <div className="mt-8">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {loading && !rooms.length ? (
-                <div className="col-span-full text-center text-zinc-400">
-                  Loading rooms...
-                </div>
-              ) : rooms.length === 0 ? (
-                <div className="col-span-full text-center text-zinc-400">
-                  No rooms available. Create one to get started!
-                </div>
-              ) : (
-                rooms.map((room, index) => (
-                  <Card key={index} className="bg-zinc-900/50 border border-zinc-800 shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-xl font-medium text-white">
-                            {room.roomName}
-                          </CardTitle>
-                          <p className="mt-1.5 flex items-center text-zinc-400">
-                            <Users className="w-4 h-4 mr-1.5" />
-                            Managed by {room.adminName}
-                          </p>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-zinc-800/50 rounded-lg p-3 mt-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-zinc-400">Admin Key</span>
-                          <button 
-                            onClick={() => copyToClipboard(room.adminKey)}
-                            className="text-zinc-400 hover:text-white transition-colors"
-                            title="Copy admin key"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
-                        </div>
-                        <code className="block mt-1 text-sm font-mono text-emerald-400">
-                          {room.adminKey}
-                        </code>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-between">
-                      <Button 
-                        variant="ghost" 
-                        className="text-red-400 hover:text-red-300 hover:bg-red-900/30"
-                        onClick={() => confirmDelete(room.adminKey)}
-                        disabled={loading}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </Button>
-                      <Button
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => handleEnterRoom(room.adminKey)}
-                        disabled={loading}
-                      >
-                        <ArrowRightCircle className="w-4 h-4 mr-2" />
-                        Enter Room
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              )}
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-zinc-400">Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Enter your name"
+                  value={registerName}
+                  onChange={(e) => setRegisterName(e.target.value)}
+                  className="bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+                  disabled={loading}
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-zinc-400">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                value={isLogin ? loginEmail : registerEmail}
+                onChange={(e) => isLogin ? setLoginEmail(e.target.value) : setRegisterEmail(e.target.value)}
+                className="bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+                disabled={loading}
+              />
             </div>
-          </div>
 
-          {/* Help Text */}
-          <div className="mt-6 text-center">
-            <p className="text-zinc-400 flex items-center justify-center">
-              <HelpCircle className="w-4 h-4 mr-2" />
-              Need help? Contact support!
-            </p>
-          </div>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-zinc-400">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={isLogin ? loginPassword : registerPassword}
+                onChange={(e) => isLogin ? setLoginPassword(e.target.value) : setRegisterPassword(e.target.value)}
+                className="bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-blue-500 focus:ring-blue-500"
+                disabled={loading}
+              />
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex flex-col space-y-4">
+            <Button 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={isLogin ? loginUser : registerUser}
+              disabled={loading}
+            >
+              {loading ? "Loading..." : (isLogin ? "Sign in" : "Create account")}
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full text-sm text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+                setSuccessMessage("");
+              }}
+              disabled={loading}
+            >
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
-};
-
-export default Rooms;
+}
