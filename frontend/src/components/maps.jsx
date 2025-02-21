@@ -40,6 +40,7 @@ const Maps = ({ adminKey }) => {
   const [userLocation, setUserLocation] = useState(null);
   const [roomExists, setRoomExists] = useState(true);
   const [isEmergency, setIsEmergency] = useState(false);
+  const [userToken, setUserToken] = useState(null);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -62,29 +63,44 @@ const Maps = ({ adminKey }) => {
       })
       .catch((error) => console.error("Room check error:", error));
 
+    socket.on("session-created", (data) => {
+      const { token, markerType } = data;
+      setUserToken(token);
+      localStorage.setItem("userToken", token);
+    });
+
     socket.on("current-users", (users) => {
       setMarkers(users);
     });
 
-    socket.on("receive-location", ({ id, latitude, longitude }) => {
+    socket.on("receive-location", ({ token, latitude, longitude, markerType }) => {
       setMarkers((prev) => ({
         ...prev,
-        [id]: { latitude, longitude },
+        [token]: { latitude, longitude, markerType },
       }));
     });
 
-    socket.on("user-disconnected", (id) => {
+    socket.on("user-joined", ({ token, markerType }) => {
+      setMarkers((prev) => ({
+        ...prev,
+        [token]: { latitude: null, longitude: null, markerType },
+      }));
+    });
+
+    socket.on("user-disconnected", (token) => {
       setMarkers((prev) => {
         const updatedMarkers = { ...prev };
-        delete updatedMarkers[id];
+        delete updatedMarkers[token];
         return updatedMarkers;
       });
     });
 
     return () => {
-      socket.off("receive-location");
-      socket.off("user-disconnected");
+      socket.off("session-created");
       socket.off("current-users");
+      socket.off("receive-location");
+      socket.off("user-joined");
+      socket.off("user-disconnected");
     };
   }, [adminKey]);
 
@@ -95,28 +111,61 @@ const Maps = ({ adminKey }) => {
           const { latitude, longitude } = position.coords;
           setUserLocation({ latitude, longitude });
 
-          socket.emit("send-location", {
-            latitude,
-            longitude,
-            roomId: adminKey,
-            isEmergency
-          });
+          if (userToken) {
+            socket.emit("send-location", {
+              latitude,
+              longitude,
+              roomId: adminKey,
+              token: userToken,
+            });
+          }
         },
         (error) => console.error("Geolocation Error:", error),
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
       );
     }
-  }, [adminKey, isEmergency]);
+  }, [adminKey, userToken]);
 
   const handleEmergencyAlert = async () => {
     setIsEmergency(true);
-    if (userLocation) {
+    if (userLocation && userToken) {
       socket.emit("emergency-signal", {
         latitude: userLocation.latitude,
         longitude: userLocation.longitude,
-        roomId: adminKey
+        roomId: adminKey,
+        token: userToken,
       });
     }
+  };
+
+  const getMarkerIcon = (markerType) => {
+    return DefaultIcon; // You can extend this for different icons if needed
+  };
+
+  const getOffsetPosition = (baseLat, baseLon, token, allMarkers) => {
+    // Group markers by their base latitude and longitude
+    const sameLocationMarkers = Object.entries(allMarkers).filter(
+      ([_, { latitude, longitude }]) =>
+        Math.abs(latitude - baseLat) < 0.0001 && Math.abs(longitude - baseLon) < 0.0001
+    );
+
+    if (sameLocationMarkers.length <= 1) {
+      return { lat: baseLat, lng: baseLon }; // No offset needed if only one marker
+    }
+
+    // Sort tokens to ensure consistent ordering for offsets
+    const sortedTokens = sameLocationMarkers.map(([t]) => t).sort();
+    const index = sortedTokens.indexOf(token);
+
+    // Offset in meters (approximately 0.0001 degrees ≈ 11 meters at equator)
+    const offset = index * 0.0001; // Adjust this value for desired spacing
+    const angle = (2 * Math.PI * index) / sameLocationMarkers.length; // Distribute around a circle
+
+    // Calculate new position (simple offset for side-by-side placement)
+    const newLat = baseLat + offset * Math.cos(angle);
+    const newLon = baseLon + offset * Math.sin(angle);
+
+    return { lat: newLat, lng: newLon };
   };
 
   return (
@@ -135,13 +184,26 @@ const Maps = ({ adminKey }) => {
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             {userLocation && <MapCenter userLocation={userLocation} />}
-            {Object.entries(markers).map(([id, { latitude, longitude }]) => (
-              <Marker key={id} position={[latitude, longitude]} icon={DefaultIcon}>
-                <Popup>User {id}</Popup>
-              </Marker>
-            ))}
+            {Object.entries(markers).map(([token, { latitude, longitude, markerType }]) => {
+              if (latitude && longitude) {
+                const { lat, lng } = getOffsetPosition(latitude, longitude, token, markers);
+                return (
+                  <Marker
+                    key={token}
+                    position={[lat, lng]}
+                    icon={getMarkerIcon(markerType)}
+                  >
+                    <Popup>User {token.slice(0, 8)}...</Popup>
+                  </Marker>
+                );
+              }
+              return null;
+            })}
             {userLocation && (
-              <Marker position={[userLocation.latitude, userLocation.longitude]} icon={DefaultIcon}>
+              <Marker
+                position={[userLocation.latitude, userLocation.longitude]}
+                icon={getMarkerIcon("default")}
+              >
                 <Popup>You</Popup>
               </Marker>
             )}
