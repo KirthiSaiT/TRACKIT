@@ -142,7 +142,7 @@ function App() {
               </MenubarMenu>
               <MenubarMenu>
                 <MenubarTrigger className="text-gray-300 hover:text-white transition-colors">
-                  <Link to="/Login">Login</Link>
+                  <Link to="/SignIn">Sign In</Link>
                 </MenubarTrigger>
               </MenubarMenu>
             </div>
@@ -163,7 +163,7 @@ function App() {
               <Link to="/Rooms" className="text-white text-lg hover:text-green-500 transition-colors" onClick={() => setIsOpen(false)}>Rooms</Link>
               <Link to="/Products" className="text-white text-lg hover:text-green-500 transition-colors" onClick={() => setIsOpen(false)}>Products</Link>
               <Link to="/Contactus" className="text-white text-lg hover:text-green-500 transition-colors" onClick={() => setIsOpen(false)}>Contact Us</Link>
-              <Link to="/Login" className="text-white text-lg hover:text-green-500 transition-colors" onClick={() => setIsOpen(false)}>Login</Link>
+              <Link to="/SignIn" className="text-white text-lg hover:text-green-500 transition-colors" onClick={() => setIsOpen(false)}>Sign In</Link>
             </div>
           </div>
         )}
@@ -305,7 +305,7 @@ function App() {
           <Route path="/Contactus" element={<ContactUs />} />
           <Route path="/products" element={<Products />} />
           <Route path="/about" element={<AboutUs />} />
-          <Route path="/Login" element={<Login />} />
+          <Route path="/SignIn" element={<Login />} />
         </Routes>
       </div>
     </BrowserRouter>
