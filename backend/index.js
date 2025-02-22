@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -25,70 +26,28 @@ app.use(cors({
   credentials: true
 }));
 
-// MongoDB connection
-const MONGODB_URI = "mongodb+srv://ADMIN:ADMIN1234@backenddb.pczr0.mongodb.net/Node-API?retryWrites=true&w=majority&appName=BackendDB";
-mongoose.connect(MONGODB_URI)
-  .then(() => console.log("✅ Connected to MongoDB Atlas"))
-  .catch((err) => console.error("❌ MongoDB Error:", err));
+// MongoDB connection with improved error handling
+mongoose.connect("mongodb+srv://ADMIN:ADMIN1234@backenddb.pczr0.mongodb.net/Node-API?retryWrites=true&w=majority", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+.then(() => console.log("✅ Connected to MongoDB Atlas"))
+.catch((err) => {
+  console.error("❌ MongoDB Connection Error:", err.message);
+  console.log("⚠️ Server continuing without database connection. Will retry automatically.");
+});
 
-  //user schema 
-  const userSchema = new mongoose.Schema({
-    uid: { type: String, required: true, unique: true },
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }, // Hashed password
-    createdAt: { type: Date, default: Date.now },
-  });
-  
-  const User = mongoose.model("User", userSchema);
-  
-  // Register a new user
-  app.post("/api/register", async (req, res) => {
-    try {
-      const { name, email, password } = req.body;
-  
-      const existingUser = await User.findOne({ email });
-      if (existingUser) return res.status(400).json({ message: "User already exists" });
-  
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = new User({
-        uid: crypto.randomUUID(),
-        name,
-        email,
-        password: hashedPassword,
-      });
-      await newUser.save();
-  
-      res.status(201).json({ message: "User registered successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Error registering user", error: error.message });
-    }
-  });
-  
-  // Login user
-  app.post("/api/login", async (req, res) => {
-    try {
-      const { email, password } = req.body;
-  
-      const user = await User.findOne({ email });
-      if (!user) return res.status(400).json({ message: "Invalid email or password" });
-  
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
-  
-      res.status(200).json({
-        message: "Login successful",
-        user: { uid: user.uid, name: user.name, email: user.email },
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Error logging in", error: error.message });
-    }
-  });
-  
-  
-  
+// Schemas
+const userSchema = new mongoose.Schema({
+  uid: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
 
-// Schemas remain the same
 const roomSchema = new mongoose.Schema({
   adminName: { type: String, required: true },
   roomName: { type: String, required: true },
@@ -109,10 +68,11 @@ const userSessionSchema = new mongoose.Schema({
   }
 });
 
+const User = mongoose.model("User", userSchema);
 const Room = mongoose.model('Room', roomSchema);
 const UserSession = mongoose.model('UserSession', userSessionSchema);
 
-// Helper Functions remain the same
+// Helper Functions
 const generateToken = () => crypto.randomBytes(16).toString('hex');
 
 const getMarkerType = (index) => {
@@ -120,7 +80,47 @@ const getMarkerType = (index) => {
   return markerTypes[index % markerTypes.length];
 };
 
-// Updated API Routes with /api prefix
+// Auth Routes
+app.post("/api/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const existingUser = await User.findOne({ email });
+    if (existingUser) return res.status(400).json({ message: "User already exists" });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = new User({
+      uid: crypto.randomUUID(),
+      name,
+      email,
+      password: hashedPassword,
+    });
+    await newUser.save();
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error registering user", error: error.message });
+  }
+});
+
+app.post("/api/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "Invalid email or password" });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
+
+    res.status(200).json({
+      message: "Login successful",
+      user: { uid: user.uid, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Error logging in", error: error.message });
+  }
+});
+
+// Room Routes
 app.post('/api/rooms', async (req, res) => {
   try {
     const { adminName, roomName, adminKey } = req.body;
@@ -164,8 +164,9 @@ app.delete('/api/rooms/:adminKey', async (req, res) => {
   }
 });
 
-// Socket.io configuration remains the same
+// Socket.io configuration
 const users = {};
+const userLocations = {};
 
 io.on('connection', async (socket) => {
   console.log(`✅ User connected: ${socket.id}`);
@@ -192,8 +193,6 @@ io.on('connection', async (socket) => {
 
       users[roomId][token] = {
         socketId: socket.id,
-        latitude: null,
-        longitude: null,
         markerType: markerType
       };
 
@@ -202,12 +201,57 @@ io.on('connection', async (socket) => {
         markerType: markerType
       });
 
-      socket.emit('current-users', users[roomId]);
+      // Only send marker types, not locations
+      const currentUsers = {};
+      for (const [userToken, userData] of Object.entries(users[roomId])) {
+        currentUsers[userToken] = {
+          markerType: userData.markerType
+        };
+      }
+      socket.emit('current-users', currentUsers);
 
       console.log(`📍 User ${socket.id} joined room ${roomId} with token ${token}`);
     } catch (error) {
       console.error('Error in join-room:', error);
     }
+  });
+
+  // Updated location handling
+  socket.on('send-location', (data) => {
+    const { id, latitude, longitude } = data;
+    userLocations[id] = { 
+      latitude, 
+      longitude,
+      socketId: socket.id 
+    };
+    // Only emit the marker position, not the details
+    io.emit('receive-location', { 
+      id,
+      position: { latitude, longitude }
+    });
+  });
+
+  // New event for requesting specific marker details
+  socket.on('request-marker-info', (markerId) => {
+    const locationInfo = userLocations[markerId];
+    if (locationInfo) {
+      socket.emit('marker-info', {
+        id: markerId,
+        ...locationInfo
+      });
+    }
+  });
+
+  socket.on('request-all-locations', () => {
+    // Send only marker positions, not full details
+    const positions = {};
+    for (const [id, data] of Object.entries(userLocations)) {
+      positions[id] = {
+        latitude: data.latitude,
+        longitude: data.longitude
+      };
+    }
+    socket.emit('all-locations', positions);
   });
 
   socket.on('disconnect', async () => {
@@ -221,6 +265,15 @@ io.on('connection', async (socket) => {
           io.to(roomId).emit('user-disconnected', token);
           await UserSession.deleteOne({ socketId: socket.id });
         }
+      }
+
+      // Remove from userLocations
+      const disconnectedId = Object.keys(userLocations).find(id => 
+        userLocations[id].socketId === socket.id
+      );
+      if (disconnectedId) {
+        delete userLocations[disconnectedId];
+        io.emit('user-disconnected', disconnectedId);
       }
     } catch (error) {
       console.error('Error in disconnect:', error);

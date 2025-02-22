@@ -194,27 +194,27 @@ const Maps = () => {
     const userMarker = useRef(null);
     const markers = useRef({});
     const [locationError, setLocationError] = useState(null);
+    const [userId, setUserId] = useState(null);
 
-    // Initialize map and handle location tracking
     useEffect(() => {
-        // Initialize map only if it hasn't been created
+        const storedUserId = localStorage.getItem('userId') || `user_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('userId', storedUserId);
+        setUserId(storedUserId);
+
         if (!mapRef.current) {
-            // Try to get last known position from localStorage
-            const lastPosition = JSON.parse(localStorage.getItem('userLocation')) || { lat: 0, lng: 0 };
-            
-            mapRef.current = L.map("map").setView([lastPosition.lat, lastPosition.lng], 16);
-            
+            mapRef.current = L.map("map", {
+                center: [0, 0],
+                zoom: 15,
+            });
+
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: "StreetMap-byPayalKri"
             }).addTo(mapRef.current);
         }
 
-        // Function to update user location
         const updateUserLocation = (latitude, longitude) => {
-            // Save location to localStorage
-            localStorage.setItem('userLocation', JSON.stringify({ lat: latitude, lng: longitude }));
+            socket.emit("send-location", { id: storedUserId, latitude, longitude });
 
-            // Update marker
             if (!userMarker.current) {
                 userMarker.current = L.marker([latitude, longitude], {
                     icon: L.icon({
@@ -226,90 +226,81 @@ const Maps = () => {
             } else {
                 userMarker.current.setLatLng([latitude, longitude]);
             }
-
-            // Update popup content with coordinates
-            userMarker.current.bindPopup(`You are here<br>Lat: ${latitude.toFixed(6)}<br>Lng: ${longitude.toFixed(6)}`).openPopup();
-
-            // Center map on user's location
-            mapRef.current.setView([latitude, longitude], 16);
-
-            // Emit location to server
-            socket.emit("send-location", { latitude, longitude });
+            userMarker.current.bindPopup(`You (${storedUserId})`).openPopup();
+            mapRef.current.setView([latitude, longitude], 15);
         };
 
-        // Handle geolocation
-        if (navigator.geolocation) {
-            // First, try to get a single accurate position
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    updateUserLocation(latitude, longitude);
-                    setLocationError(null);
-                },
-                (error) => {
-                    console.error("Error getting initial position:", error);
-                    setLocationError(`Error getting location: ${error.message}`);
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
-
-            // Then start watching position for updates
-            const watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    updateUserLocation(latitude, longitude);
-                    setLocationError(null);
-                },
-                (error) => {
-                    console.error("Error watching position:", error);
-                    setLocationError(`Error tracking location: ${error.message}`);
-                },
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-            );
-
-            // Cleanup function
-            return () => {
-                navigator.geolocation.clearWatch(watchId);
-                if (mapRef.current) {
-                    mapRef.current.remove();
-                    mapRef.current = null;
-                }
-            };
-        } else {
-            setLocationError("Geolocation is not supported by this browser.");
-        }
-    }, []);
-
-    // Handle other users' locations
-    useEffect(() => {
-        socket.on("receive-location", ({ id, latitude, longitude }) => {
-            if (mapRef.current) {
-                if (markers.current[id]) {
-                    markers.current[id].setLatLng([latitude, longitude]);
-                } else {
-                    markers.current[id] = L.marker([latitude, longitude])
-                        .addTo(mapRef.current)
-                        .bindPopup(`User ${id}`);
-                }
+        navigator.geolocation.watchPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                updateUserLocation(latitude, longitude);
+                setLocationError(null);
+            },
+            (error) => {
+                setLocationError("Unable to get your location. Please check permissions.");
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
             }
-        });
+        );
 
-        socket.on("user-disconnected", (id) => {
-            if (markers.current[id]) {
-                mapRef.current.removeLayer(markers.current[id]);
-                delete markers.current[id];
-            }
-        });
+        socket.emit("request-all-locations");
 
         return () => {
             socket.off("receive-location");
+            socket.off("all-locations");
             socket.off("user-disconnected");
         };
     }, []);
 
+    useEffect(() => {
+        socket.on("receive-location", ({ id, latitude, longitude }) => {
+            if (!mapRef.current || id === userId) return;
+
+            if (markers.current[id]) {
+                markers.current[id].setLatLng([latitude, longitude]);
+            } else {
+                markers.current[id] = L.marker([latitude, longitude], {
+                    icon: L.icon({
+                        iconUrl: id === userId ? "https://leafletjs.com/examples/custom-icons/leaf-red.png" : "https://leafletjs.com/examples/custom-icons/leaf-green.png",
+                        iconSize: [25, 41],
+                        iconAnchor: [12, 41],
+                    })
+                }).addTo(mapRef.current).bindPopup(`User ${id}`).openPopup();
+            }
+        });
+
+        socket.on("all-locations", (locations) => {
+            Object.entries(locations).forEach(([id, location]) => {
+                if (id !== userId && location.latitude && location.longitude) {
+                    if (markers.current[id]) {
+                        markers.current[id].setLatLng([location.latitude, location.longitude]);
+                    } else {
+                        markers.current[id] = L.marker([location.latitude, location.longitude], {
+                            icon: L.icon({
+                                iconUrl: "https://leafletjs.com/examples/custom-icons/leaf-green.png",
+                                iconSize: [25, 41],
+                                iconAnchor: [12, 41],
+                            })
+                        }).addTo(mapRef.current).bindPopup(`User ${id}`).openPopup();
+                    }
+                }
+            });
+        });
+
+        socket.on("user-disconnected", (disconnectedId) => {
+            if (markers.current[disconnectedId]) {
+                mapRef.current.removeLayer(markers.current[disconnectedId]);
+                delete markers.current[disconnectedId];
+            }
+        });
+    }, [userId]);
+
     return (
-        <div className="relative h-screen w-full">
-            <div id="map" className="h-full w-full" />
+        <div className="fixed inset-0 overflow-hidden">
+            <div id="map" className="w-full h-full" />
             {locationError && (
                 <div className="absolute top-4 left-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                     {locationError}
