@@ -181,6 +181,7 @@
 //   );
 // }
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
@@ -190,12 +191,11 @@ import {
   GoogleAuthProvider, 
   updateProfile 
 } from "firebase/auth";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card.jsx";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "./ui/card.jsx";
 import { Label } from "./ui/label.jsx";
 import { Input } from "./ui/input.jsx";
 import { Button } from "./ui/button.jsx";
 
-// Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyBSxyB1FU-YHZ69ZkAowvj5ECzBf1UfEH8",
   authDomain: "track-it-d9793.firebaseapp.com",
@@ -206,7 +206,6 @@ const firebaseConfig = {
   measurementId: "G-XXF0VYQSPM"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
@@ -216,12 +215,33 @@ export default function FirebaseAuth() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   // Register User
   const registerUser = async () => {
     try {
+      // First create user in Firebase
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
+      
+      // Then store user data in MongoDB
+      const response = await fetch('http://localhost:3000/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: userCredential.user.uid,
+          name: name,
+          email: email,
+          password: password // Will be hashed on server
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to store user data in MongoDB');
+      }
+
       alert("Registration Successful!");
       setIsLogin(true);
     } catch (error) {
@@ -232,8 +252,27 @@ export default function FirebaseAuth() {
   // Login User
   const loginUser = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      // First authenticate with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Then verify with MongoDB
+      const response = await fetch('http://localhost:3000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to authenticate with server');
+      }
+
       alert("Login Successful!");
+      navigate("/");
     } catch (error) {
       alert(error.message);
     }
@@ -243,7 +282,27 @@ export default function FirebaseAuth() {
   const signInWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
+      
+      // Store Google user data in MongoDB
+      const response = await fetch('http://localhost:3000/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: result.user.uid,
+          name: result.user.displayName,
+          email: result.user.email,
+          password: crypto.randomUUID() // Generate a random password for Google users
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn('Failed to store Google user data in MongoDB');
+      }
+
       alert(`Welcome, ${result.user.displayName}!`);
+      navigate("/home");
     } catch (error) {
       alert(error.message);
     }
@@ -290,6 +349,3 @@ export default function FirebaseAuth() {
     </div>
   );
 }
-
-
-
