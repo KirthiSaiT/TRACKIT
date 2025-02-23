@@ -44,6 +44,7 @@ import GlobalSecurity from './components/GlobalSecurity';
 import FirebaseAuth from './components/login.jsx';
 import Login from './components/login.jsx';
 import Footer from './components/footer.jsx';
+import TestimonialSlider from './components/TestimonialSlider.jsx';
 import ContactUs from './components/contactus.jsx';
 import HowTo from './components/howto.jsx';
 import Products from './components/products.jsx';
@@ -290,6 +291,9 @@ function App() {
 
                 <div className="mt-12 sm:mt-16">
                   <GlobalSecurity />
+                </div>
+                <div className="mt-12 sm:mt-16">
+                  <TestimonialSlider/>
                 </div>
 
                 <div className="mt-12 sm:mt-16">

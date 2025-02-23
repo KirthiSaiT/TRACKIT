@@ -167,6 +167,16 @@ app.delete('/api/rooms/:adminKey', async (req, res) => {
 // Socket.io configuration
 const users = {};
 const userLocations = {};
+io.on("connection", (socket) => {
+  socket.on("user-joined", (userId) => {
+      socket.broadcast.emit("user-joined", userId); // Notify others
+  });
+
+  socket.on("disconnect", () => {
+      io.emit("user-disconnected", socket.id); // Notify all users
+  });
+});
+
 
 io.on('connection', async (socket) => {
   console.log(`✅ User connected: ${socket.id}`);
